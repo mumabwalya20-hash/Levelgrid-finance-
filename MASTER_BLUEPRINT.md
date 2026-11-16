@@ -9,7 +9,7 @@
 | Interface | One-page application |
 | Currency | ZMW |
 | Priority | Data safety, simplicity and low server CPU use |
-| Implementation | Feature 01 is next |
+| Implementation | [See the progress tracker](PROGRESS.md) |
 
 ## 1. Business Purpose
 
@@ -200,4 +200,4 @@ The application must meet these conditions.
 
 ## 13. Approval Status
 
-The Owner approved this revised master blueprint on 16 November 2026 with the requirement to enter sales and expense amounts explicitly. Feature 01 is next in the approved implementation sequence.
+The Owner approved this revised master blueprint on 16 November 2026 with the requirement to enter sales and expense amounts explicitly. Feature 01 begins the approved implementation sequence.
