@@ -1,8 +1,8 @@
 # Levelgrid Finance feature roadmap
 
-This roadmap is proposed with the [revised master blueprint](MASTER_BLUEPRINT.md). Application implementation starts after explicit Owner approval.
+This roadmap follows the [approved revised master blueprint](MASTER_BLUEPRINT.md).
 
-## Proposed order and dependencies
+## Feature order and dependencies
 
 | Feature | Depends on | Deliverable |
 | --- | --- | --- |
@@ -47,15 +47,19 @@ Define how trusted offline access ends on sign-out or remote revocation, and how
 
 ## Feature 03 — Guided Daily Entry
 
-Provide date selection, one operating department per step, shared Finance Expenses, review and confirmation. Autosave drafts while the Owner works. When confirming or correcting, write confirmed values and pending operations together. Use stable identities and a uniqueness rule for department and date so editing reopens the existing entry. Keep shared Finance Expenses tied to the selected day.
+Provide date selection, one operating department per step, shared Finance Expenses, review and confirmation. Start new amount fields blank. Require an explicit numeric entry for each sales or expense amount, including Finance Expenses. Enter `0` for zero. Block advancement from a step when a required amount on that step is blank and recheck all required amounts at confirmation. Autosave incomplete drafts while the Owner works. When confirming or correcting, write confirmed values and pending operations together. Use stable identities and a uniqueness rule for department and date so editing reopens the existing entry. Keep shared Finance Expenses tied to the selected day.
 
 ### Acceptance checks
 
-Resume a draft after closing the PWA. Confirm a zero day offline and distinguish it from a missing day. Validate exact edits to ZMW amounts with up to two decimal places. Reopen an existing day, save a correction and verify the same confirmed entry is updated and pending. Verify that interrupted local saves leave a consistent set of records and pending operations.
+- Resume an incomplete draft after closing the PWA and verify the amounts already entered are retained.
+- Leave the sales amount blank with an expense entered and verify that Next is blocked. Repeat with the departmental expense amount blank and with Finance Expenses blank. Verify that final confirmation also rejects any blank required amount.
+- Type `0` for zero sales and expenses, confirm the day offline and distinguish that confirmed zero day from a missing day.
+- Validate exact edits to ZMW amounts with up to two decimal places. Reopen an existing day, save a correction and verify the same confirmed entry is updated and pending.
+- Verify that interrupted local saves leave a consistent set of records and pending operations.
 
 ### Design details to settle
 
-Define which departments appear when entering a past date after a department was added or deactivated and which amount inputs are valid. Use the Lusaka calendar date as the proposed business date convention.
+Define which departments appear when entering a past date after a department was added or deactivated, and define the permitted amount range. Use the Lusaka calendar date for business records.
 
 ## Feature 04 — Reliable Sync and Recovery
 

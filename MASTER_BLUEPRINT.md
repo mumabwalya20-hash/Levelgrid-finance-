@@ -1,15 +1,15 @@
 # Daily Finance — Revised Master Blueprint
 
-| Item | Proposal |
+| Item | Details |
 | --- | --- |
-| Status | Proposed for approval |
+| Status | Approved by the Owner on 16 November 2026 |
 | Platform | Android Next.js PWA |
 | Users | One private account, one primary phone |
 | Architecture | Offline-first, Supabase cloud synchronization |
 | Interface | One-page application |
 | Currency | ZMW |
 | Priority | Data safety, simplicity and low server CPU use |
-| Implementation | Awaiting explicit Owner approval |
+| Implementation | Feature 01 is next |
 
 ## 1. Business Purpose
 
@@ -59,7 +59,7 @@ After pressing Enter Daily Sales, the user can follow these steps.
 
 The form automatically saves unfinished drafts.
 
-Blank amounts count as zero. Monetary values are validated and stored accurately to two decimal places.
+Start new amount fields blank. Require an explicit numeric value for all sales and expense amounts, including Finance Expenses. A blank amount blocks **Next** on its step and blocks final confirmation. Enter `0` when the amount is zero. Monetary values are validated and stored accurately to two decimal places.
 
 One confirmed entry per department per day is allowed. Existing confirmed entries can be reopened and edited.
 
@@ -107,7 +107,7 @@ Foreground use and Sync Now are the supported ways to catch up with pending chan
 
 For one primary writing device, use record identifiers and revisions. If an unexpected cloud version conflict occurs, preserve the pending local record and notify the user.
 
-This is a proposed safety improvement to the earlier last-edited-wins decision.
+This rule supersedes the earlier last-edited-wins decision.
 
 ## 7. Data Recovery Protection
 
@@ -178,7 +178,7 @@ Reports generated with missing or unsynchronized data must include a clear notic
 | 05 — Dashboard and PDF Reports | Local calculations, date filters, daily records and PDF generation |
 | 06 — Testing and Release | Offline tests, interrupted synchronization, duplicate retries, recovery from accidental edits, phone-replacement recovery, security tests and CPU monitoring |
 
-Each feature requires successful testing before acceptance. See [Feature roadmap](FEATURE_ROADMAP.md) for dependencies and proposed checks.
+Each feature requires successful testing before acceptance. See [Feature roadmap](FEATURE_ROADMAP.md) for dependencies and acceptance checks.
 
 ## 12. Required Acceptance Conditions
 
@@ -188,6 +188,7 @@ The application must meet these conditions.
 - Operate entirely from one main page.
 - Save financial records without internet access.
 - Preserve incomplete drafts.
+- Require explicit amounts before advancing or confirming, including `0` for zero amounts.
 - Prevent duplicate daily department records.
 - Allow corrections to existing records.
 - Recover safely from interrupted synchronization.
@@ -199,6 +200,4 @@ The application must meet these conditions.
 
 ## 13. Approval Status
 
-This is a revised planning proposal incorporating the latest requirements. It carries forward the original business requirements and proposes refinements to synchronization conflicts and recovery copies.
-
-Application implementation requires the Owner's explicit approval of this revised master blueprint.
+The Owner approved this revised master blueprint on 16 November 2026 with the requirement to enter sales and expense amounts explicitly. Feature 01 is next in the approved implementation sequence.

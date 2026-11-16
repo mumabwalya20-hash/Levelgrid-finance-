@@ -4,9 +4,9 @@
 
 | Item | State |
 | --- | --- |
-| Revised master blueprint | Proposed, awaiting Owner approval |
-| Feature roadmap | Proposed |
-| Application implementation | Awaiting blueprint approval |
+| Revised master blueprint | Approved by the Owner on 16 November 2026 |
+| Feature roadmap | Approved |
+| Application implementation | Feature 01 is next |
 | Application tests | Pending implementation |
 
 ## Feature tracker
@@ -23,7 +23,8 @@
 ## Decision log
 
 - **16 November 2026** — Prepared the revised master blueprint, contributor instructions and proposed feature roadmap for Owner review. The proposal calls for revision checks, preservation of pending local changes on conflict and a small rolling recovery copy after corrections.
+- **16 November 2026** — The Owner approved the revised master blueprint and roadmap with one correction. Required sales and expense amounts must be entered before advancing or confirming, and the Owner enters `0` for a zero amount.
 
 ## Next action
 
-The Owner reviews [MASTER_BLUEPRINT.md](MASTER_BLUEPRINT.md). Record approval when given, then start Feature 01 using the [roadmap](FEATURE_ROADMAP.md).
+Start Feature 01 — Foundation and One-Page PWA — using the [roadmap](FEATURE_ROADMAP.md).
