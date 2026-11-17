@@ -6,15 +6,15 @@
 | --- | --- |
 | Revised master blueprint | Approved by the Owner on 16 November 2026 |
 | Feature roadmap | Approved |
-| Application implementation | Feature 01 merged. Feature 02 first implementation in review |
-| Application tests | Feature 02 static build, simulated Auth and PostgreSQL policy checks passed. Cloud and phone checks pending |
+| Application implementation | Features 01 and 02 merged. Feature 03 pending |
+| Application tests | Feature 02 static build, simulated Auth, PostgreSQL-compatible policy checks and Owner testing passed |
 
 ## Feature tracker
 
 | Feature | Implementation | Test evidence | Acceptance |
 | --- | --- | --- | --- |
 | 01 — Foundation and One-Page PWA | Implemented | Static build, types, installability, panel navigation and offline reopen verified in Chromium | Owner Android check passed on 17 November 2026 |
-| 02 — Authentication and Offline Database | Initial implementation | Chromium with simulated Supabase Auth and PostgreSQL-compatible schema tests passed | Pending Supabase test deployment and Owner Android check |
+| 02 — Authentication and Offline Database | Implemented | Static build, Chromium with simulated Supabase Auth and PostgreSQL-compatible schema tests passed | Owner reported Feature 02 passed on 17 November 2026 |
 | 03 — Guided Daily Entry | Pending | Pending | Pending |
 | 04 — Reliable Sync and Recovery | Pending | Pending | Pending |
 | 05 — Dashboard and PDF Reports | Pending | Pending | Pending |
@@ -26,6 +26,7 @@
 - **16 November 2026** — The Owner approved the revised master blueprint and roadmap with one correction. Required sales and expense amounts must be entered before advancing or confirming, and the Owner enters `0` for a zero amount.
 - **16 November 2026** — Implemented the branded one-page shell, reporting-month control, panels, web app manifest and versioned offline cache.
 - **17 November 2026** — Merged the Android-tested Feature 01 branch. Started Feature 02 with Owner sign-in, device trust, Dexie storage, department management and an account-scoped cloud schema.
+- **17 November 2026** — Merged Feature 02 into `main`. [Pull request #3](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/3)
 
 ## Feature 01 verification
 
@@ -45,4 +46,4 @@
 
 ## Next action
 
-Connect a Supabase testing project, apply the migration, and deploy Feature 02 to a Vercel preview for the [Owner Android checks](README.md#check-feature-02-on-android).
+[Feature 03 — Guided Daily Entry](FEATURE_ROADMAP.md#feature-03--guided-daily-entry) is next. Set the rules for department selection on past dates and the supported amount range, then implement the dated form, draft saving and corrections.
