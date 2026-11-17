@@ -154,6 +154,37 @@ p {
   white-space: nowrap;
 }
 
+.reporting-controls {
+  display: grid;
+  gap: 8px;
+}
+
+.reporting-mode {
+  display: flex;
+  justify-self: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--blue-soft);
+}
+
+.reporting-mode button {
+  min-height: 36px;
+  min-width: 67px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--blue);
+  font-size: 0.77rem;
+  font-weight: 690;
+}
+
+.reporting-mode button[aria-pressed="true"] {
+  background: var(--blue);
+  color: #fff;
+}
+
 .month-field:focus-within {
   outline: 3px solid #245bd0;
   outline-offset: 3px;
@@ -206,12 +237,37 @@ p {
   line-height: 1.25;
 }
 
+.summary-card > div {
+  min-width: 0;
+}
+
+.summary-card:not(.sales-card) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 5px 8px;
+}
+
+.summary-card:not(.sales-card) .summary-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.summary-card:not(.sales-card) > div + div {
+  display: contents;
+}
+
+.summary-card:not(.sales-card) .summary-value {
+  grid-column: 1 / -1;
+}
+
 .summary-value {
   margin-block-start: 1px;
   color: var(--blue);
   font-size: 1.31rem;
   font-weight: 710;
   line-height: 1.13;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .summary-icon,
@@ -281,6 +337,84 @@ p {
   font-size: 0.66rem;
   font-weight: 680;
   letter-spacing: 0.035em;
+}
+
+.department-totals {
+  margin-block-start: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.department-totals summary {
+  padding: 11px 0;
+  color: var(--blue);
+  font-size: 0.85rem;
+  font-weight: 690;
+  cursor: pointer;
+}
+
+.department-totals dl,
+.department-totals ul {
+  margin: 0;
+}
+
+.department-totals ul {
+  padding: 0;
+  list-style: none;
+}
+
+.department-totals li {
+  padding: 10px 0;
+  border-block-start: 1px solid var(--border);
+}
+
+.department-totals h3 {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.department-totals small,
+.department-totals dt {
+  color: var(--muted);
+  font-size: 0.73rem;
+}
+
+.department-totals h3 small {
+  margin-inline-start: 5px;
+}
+
+.department-totals dd {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 660;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.department-totals li dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.expense-breakdown {
+  padding-block-end: 7px;
+}
+
+.expense-breakdown div {
+  display: flex;
+  justify-content: space-between;
+  gap: 9px;
+  padding: 4px 0;
+}
+
+.coverage-note {
+  margin-block-start: 8px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.42;
 }
 
 .action {
@@ -376,6 +510,19 @@ p {
 
 .recent-record span {
   font-size: 0.74rem;
+}
+
+.record-description {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.record-description small {
+  color: var(--muted);
+  font-size: 0.73rem;
+  font-weight: 570;
 }
 
 .app-footer {
@@ -549,6 +696,7 @@ p {
 }
 
 .form-field input,
+.form-field select,
 .form-field textarea {
   width: 100%;
   min-height: 46px;
@@ -559,6 +707,12 @@ p {
   color: var(--blue-deep);
   font-size: 1rem;
   font-weight: 450;
+}
+
+.form-field select {
+  min-width: 0;
+  font: inherit;
+  font-size: 1rem;
 }
 
 .form-field textarea {
