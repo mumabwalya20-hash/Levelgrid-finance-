@@ -29,7 +29,9 @@ To serve the production build on the build computer, run `python3 -m http.server
 
 Deploy the `testing` branch to the Levelgrid Finance project as a Vercel Preview. When the deployment is ready, assign the existing test address to it and verify the address serves the intended `testing` commit. [Open Levelgrid Finance](https://levelgrid-finance.vercel.app/)
 
-Install the PWA from that address once. To load a new preview, close the installed app and any Chrome tabs for the address, then reopen it online. Keep the phone's site data so the same installation keeps drafts and pending changes.
+Install the PWA from that address once. If an older installation shows feature placeholders, refresh the test address in Chrome while online, then reopen the installed app.
+
+For future releases, finish any open entry and tap **Update app** in the footer when it appears. The app reloads once the new offline shell is ready. Keep the phone's site data so the same installation keeps drafts and pending changes.
 
 ## Check Feature 01 on Android
 
@@ -88,7 +90,7 @@ Run the [Feature 04 migration](supabase/migrations/20261117000004_finance_sync.s
 
 ## Check Feature 04 on Android
 
-Close and reopen the installed app while online at the existing [test address](https://levelgrid-finance.vercel.app/).
+Open the installed app while online at the existing test address and tap **Update app** when available. [Open Levelgrid Finance](https://levelgrid-finance.vercel.app/)
 
 1. Turn off Wi-Fi and mobile data. Confirm a day with test figures and check the pending notice on the main page.
 2. Reconnect. Open **More → Sync Now** and wait for **Your saved entries are up to date**. Reopen and correct the day, then check that the pending notice clears again.

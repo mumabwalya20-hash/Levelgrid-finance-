@@ -316,7 +316,7 @@ export default function FinancePage() {
   const [access, setAccess] = useState<OwnerAccess>({ screen: "checking" });
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const session = useRef<OwnerSession | null>(null);
-  const { isOnline, offlineStatus } = useAppStatus();
+  const { isOnline, offlineStatus, updateReady } = useAppStatus();
 
   useEffect(() => {
     const owner = new OwnerSession(setAccess, setSyncStatus);
@@ -364,7 +364,9 @@ export default function FinancePage() {
           />
           {connected === null ? "Checking connection" : connected ? "Online" : "Offline"}
         </span>
-        <span>{appStatus}</span>
+        {updateReady ? (
+          <button className="action" type="button" onClick={() => window.location.reload()}>Update app</button>
+        ) : <span>{appStatus}</span>}
       </footer>
     </main>
   );

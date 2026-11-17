@@ -7,6 +7,7 @@ type OfflineStatus = "preparing" | "ready" | "unavailable" | "development";
 export function useAppStatus() {
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>("preparing");
+  const [updateReady, setUpdateReady] = useState(false);
 
   useEffect(() => {
     const syncConnection = () => setIsOnline(navigator.onLine);
@@ -31,7 +32,10 @@ export function useAppStatus() {
     }
 
     const serviceWorkers = navigator.serviceWorker;
+    let registration: ServiceWorkerRegistration | undefined;
     let installing: ServiceWorker | null = null;
+    let controller = serviceWorkers.controller;
+    let updateCheck: Promise<void> | undefined;
     let disposed = false;
 
     function updateStatus() {
@@ -43,33 +47,59 @@ export function useAppStatus() {
       }
     }
 
-    async function register() {
+    function controllerChanged() {
+      const current = serviceWorkers.controller;
+      if (controller && current && current !== controller) setUpdateReady(true);
+      controller = current;
       updateStatus();
+    }
+
+    function watchInstall() {
+      installing?.removeEventListener("statechange", updateStatus);
+      installing = registration?.installing ?? null;
+      installing?.addEventListener("statechange", updateStatus);
+      updateStatus();
+    }
+
+    async function registerOrUpdate() {
       try {
-        const registration = await serviceWorkers.register("/sw.js", {
-          updateViaCache: "none",
-        });
-        if (disposed) return;
-        installing?.removeEventListener("statechange", updateStatus);
-        installing = registration.installing;
-        installing?.addEventListener("statechange", updateStatus);
-        updateStatus();
+        if (!registration) {
+          const registered = await serviceWorkers.register("/sw.js", { updateViaCache: "none" });
+          if (disposed) return;
+          registration = registered;
+          registration.addEventListener("updatefound", watchInstall);
+          watchInstall();
+        }
+        if (navigator.onLine && registration.active) await registration.update();
       } catch {
         if (!disposed && !serviceWorkers.controller) setOfflineStatus("unavailable");
       }
     }
 
-    serviceWorkers.addEventListener("controllerchange", updateStatus);
-    window.addEventListener("online", register);
-    void register();
+    function checkForUpdate() {
+      if (disposed || updateCheck) return;
+      updateCheck = registerOrUpdate().finally(() => { updateCheck = undefined; });
+    }
+
+    function onVisibility() {
+      if (document.visibilityState === "visible" && navigator.onLine) checkForUpdate();
+    }
+
+    serviceWorkers.addEventListener("controllerchange", controllerChanged);
+    window.addEventListener("online", checkForUpdate);
+    document.addEventListener("visibilitychange", onVisibility);
+    updateStatus();
+    checkForUpdate();
 
     return () => {
       disposed = true;
       installing?.removeEventListener("statechange", updateStatus);
-      serviceWorkers.removeEventListener("controllerchange", updateStatus);
-      window.removeEventListener("online", register);
+      registration?.removeEventListener("updatefound", watchInstall);
+      serviceWorkers.removeEventListener("controllerchange", controllerChanged);
+      window.removeEventListener("online", checkForUpdate);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
-  return { isOnline, offlineStatus };
+  return { isOnline, offlineStatus, updateReady };
 }

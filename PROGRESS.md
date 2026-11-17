@@ -61,6 +61,7 @@
 - Applied the migration to PostgreSQL-compatible fixtures with existing records. Checked Owner-only RPC access, revoked sessions, bounded pages, exact amounts, retry receipts and expected revisions.
 - Chromium with simulated Auth and real PostgreSQL-compatible sync functions covered a missing migration, a cloud commit with a lost acknowledgement, a newer correction made during upload, reconnect, and a conflict that kept the phone and cloud versions.
 - Recovered previous values into a draft. On a fresh browser, restored the cloud copy, rejected a backup for another Owner, then restored a valid backup with offline entries and a draft.
+- Reproduced the older Feature 02 placeholders at the fixed address while an earlier app window remained open. Verified that the new shell activates after its assets are cached. A normal refresh loaded Features 03 and 04 while the earlier tab remained open. A failed shell install kept offline access working, and an update preserved pending changes and a saved draft.
 
 ## Next action
 
