@@ -6,8 +6,8 @@
 | --- | --- |
 | Revised master blueprint | Approved by the Owner on 16 November 2026 |
 | Feature roadmap | Approved |
-| Application implementation | Features 01–03 merged. Feature 04 implemented on its review branch |
-| Application tests | Feature 04 static build, database checks and offline browser checks passed. Owner Android check pending |
+| Application implementation | Features 01–04 implemented. Feature 05 is next |
+| Application tests | Feature 04 static build, database checks, offline browser checks and Owner testing passed |
 
 ## Feature tracker
 
@@ -16,7 +16,7 @@
 | 01 — Foundation and One-Page PWA | Implemented | Static build, types, installability, panel navigation and offline reopen verified in Chromium | Owner Android check passed on 17 November 2026 |
 | 02 — Authentication and Offline Database | Implemented | Static build, Chromium with simulated Supabase Auth and PostgreSQL-compatible schema tests passed | Owner reported Feature 02 passed on 17 November 2026 |
 | 03 — Guided Daily Entry | Implemented | TypeScript, static build, phone-size Chromium and IndexedDB checks passed | Owner confirmed the Android test passed on 17 November 2026 |
-| 04 — Reliable Sync and Recovery | Implemented | PostgreSQL-compatible migration and browser checks passed | Owner Android check pending after Supabase migration |
+| 04 — Reliable Sync and Recovery | Implemented | PostgreSQL-compatible migration and browser checks passed | Owner confirmed Feature 04 passed on 17 November 2026 |
 | 05 — Dashboard and PDF Reports | Pending | Pending | Pending |
 | 06 — Testing and Release | Pending | Pending | Pending |
 
@@ -31,6 +31,7 @@
 - **17 November 2026** — The Owner approved Feature 03 and requested one address for phone testing. The `testing` branch is used for every Vercel Preview at that address. [Owner test address](https://levelgrid-finance.vercel.app/)
 - **17 November 2026** — Merged Feature 03 and published it at the fixed test address from `testing`. [Pull request #4](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/4)
 - **17 November 2026** — Implemented incremental Supabase sync, upload receipts, revision conflict protection, the latest 20 correction copies and emergency backup and restore.
+- **17 November 2026** — The Owner accepted Feature 04 and authorized Feature 05. [Pull request #5](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/5)
 
 ## Feature 01 verification
 
@@ -65,4 +66,4 @@
 
 ## Next action
 
-Apply the Feature 04 migration in the Owner's Supabase project and run the [Feature 04 Android checks](README.md#check-feature-04-on-android) at the fixed test address.
+Implement Feature 05 and deploy the dashboard and PDF reports from `testing` for Owner acceptance.
