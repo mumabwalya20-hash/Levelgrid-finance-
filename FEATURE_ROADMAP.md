@@ -59,9 +59,11 @@ Provide date selection, one operating department per step, shared Finance Expens
 - Validate exact edits to ZMW amounts with up to two decimal places. Reopen an existing day, save a correction and verify the same confirmed entry is updated and pending.
 - Verify that interrupted local saves leave a consistent set of records and pending operations.
 
-### Design details to settle
+### Dates and amounts
 
-Define which departments appear when entering a past date after a department was added or deactivated, and define the permitted amount range. Use the Lusaka calendar date for business records.
+Use the Lusaka calendar date. The original five departments are available for historical entry before the app setup date. Departments added later appear from their addition date through the day before deactivation. Drafts and confirmed records keep the departments already included on that date.
+
+Store exact signed amounts in whole ngwee within the cloud schema's range of −K90,071,992,547,409.91 to K90,071,992,547,409.91.
 
 ## Feature 04 — Reliable Sync and Recovery
 

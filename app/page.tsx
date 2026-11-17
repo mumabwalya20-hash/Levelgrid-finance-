@@ -17,30 +17,19 @@ import {
 import { liveQuery } from "dexie";
 import { useEffect, useRef, useState } from "react";
 import { AppDialog, type AppPanel } from "./app-dialog";
+import { DailyEntryPanel } from "./daily-entry-panel";
 import { DepartmentPanel } from "./department-panel";
+import { businessDate, formatEntryDate } from "./finance/daily-entry";
 import type { Department, FinanceDatabase } from "./finance/database";
 import { OwnerSession, type OwnerAccess } from "./finance/owner-session";
 import { OwnerSignIn } from "./owner-sign-in";
 import { useAppStatus } from "./use-app-status";
-
-const businessMonthFormatter = new Intl.DateTimeFormat("en-GB", {
-  timeZone: "Africa/Lusaka",
-  year: "numeric",
-  month: "2-digit",
-});
 
 const reportMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
   year: "numeric",
   month: "long",
 });
-
-function currentBusinessMonth() {
-  const parts = businessMonthFormatter.formatToParts(new Date());
-  const year = parts.find((part) => part.type === "year")!.value;
-  const month = parts.find((part) => part.type === "month")!.value;
-  return year + "-" + month;
-}
 
 function shiftMonth(value: string, offset: number) {
   const [year, month] = value.split("-").map(Number);
@@ -84,12 +73,14 @@ function AppHeader({ onMore }: { onMore?: () => void }) {
 function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; signOut: () => boolean }) {
   const [month, setMonth] = useState("");
   const [panel, setPanel] = useState<AppPanel | null>(null);
+  const [entryDate, setEntryDate] = useState<string>();
+  const [recent, setRecent] = useState<{ month: string; dates: string[]; failed?: boolean }>();
   const [saved, setSaved] = useState<{ departments: Department[]; pendingCount: number }>();
   const [readFailed, setReadFailed] = useState(false);
   const [signOutFailed, setSignOutFailed] = useState(false);
 
   useEffect(() => {
-    setMonth(currentBusinessMonth());
+    setMonth(businessDate().slice(0, 7));
   }, []);
 
   useEffect(() => {
@@ -105,6 +96,21 @@ function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; si
     return () => subscription.unsubscribe();
   }, [database]);
 
+  useEffect(() => {
+    if (!month) return;
+    const subscription = liveQuery(() => database.recentEntryDates(month)).subscribe({
+      next: (dates) => setRecent({ month, dates }),
+      error: () => setRecent({ month, dates: [], failed: true }),
+    });
+    return () => subscription.unsubscribe();
+  }, [database, month]);
+
+  function openEntry(date?: string) {
+    setEntryDate(date);
+    setPanel("entry");
+  }
+
+  const recentForMonth = recent?.month === month ? recent : undefined;
   const pending = saved?.pendingCount ?? 0;
   return (
     <>
@@ -193,7 +199,7 @@ function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; si
             className="action action-primary"
             type="button"
             aria-haspopup="dialog"
-            onClick={() => setPanel("entry")}
+            onClick={() => openEntry()}
           >
             <CirclePlus size={22} aria-hidden="true" />
             Enter Daily Sales
@@ -220,16 +226,41 @@ function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; si
 
         <section className="recent-records" aria-labelledby="recent-title">
           <h2 id="recent-title">Recent daily records</h2>
-          <div className="empty-records">
-            <span className="record-icon">
-              <ClipboardList size={19} aria-hidden="true" />
-            </span>
-            <p>No confirmed records for this month.</p>
-          </div>
+          {recentForMonth?.dates.length ? (
+            <ul className="recent-list">
+              {recentForMonth.dates.map((date) => (
+                <li key={date}>
+                  <button className="recent-record" type="button" aria-haspopup="dialog"
+                    aria-label={`View or edit ${formatEntryDate(date)}`} onClick={() => openEntry(date)}>
+                    <CalendarDays size={18} aria-hidden="true" />
+                    <time dateTime={date}>{formatEntryDate(date)}</time>
+                    <span>View / Edit</span>
+                    <ChevronRight size={17} aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="empty-records">
+              <span className="record-icon">
+                <ClipboardList size={19} aria-hidden="true" />
+              </span>
+              <p>{recentForMonth?.failed ? "Couldn't load recent records." :
+                recentForMonth ? "No confirmed records for this month." : "Loading recent records…"}</p>
+            </div>
+          )}
         </section>
       </div>
 
       <AppDialog panel={panel} setPanel={setPanel}>
+        {panel === "entry" && (
+          <DailyEntryPanel
+            database={database}
+            initialDate={entryDate}
+            onSaved={(date) => setMonth(date.slice(0, 7))}
+            onClose={() => setPanel(null)}
+          />
+        )}
         {panel === "departments" && (
           <DepartmentPanel database={database} departments={saved?.departments} readFailed={readFailed} />
         )}

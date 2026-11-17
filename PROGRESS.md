@@ -6,8 +6,8 @@
 | --- | --- |
 | Revised master blueprint | Approved by the Owner on 16 November 2026 |
 | Feature roadmap | Approved |
-| Application implementation | Features 01 and 02 merged. Feature 03 pending |
-| Application tests | Feature 02 static build, simulated Auth, PostgreSQL-compatible policy checks and Owner testing passed |
+| Application implementation | Features 01 and 02 merged. Feature 03 implemented on its review branch |
+| Application tests | Feature 03 static build and offline browser checks passed. Owner Android check pending |
 
 ## Feature tracker
 
@@ -15,7 +15,7 @@
 | --- | --- | --- | --- |
 | 01 — Foundation and One-Page PWA | Implemented | Static build, types, installability, panel navigation and offline reopen verified in Chromium | Owner Android check passed on 17 November 2026 |
 | 02 — Authentication and Offline Database | Implemented | Static build, Chromium with simulated Supabase Auth and PostgreSQL-compatible schema tests passed | Owner reported Feature 02 passed on 17 November 2026 |
-| 03 — Guided Daily Entry | Pending | Pending | Pending |
+| 03 — Guided Daily Entry | Implemented | TypeScript, static build, phone-size Chromium and IndexedDB checks passed | Owner Android check pending |
 | 04 — Reliable Sync and Recovery | Pending | Pending | Pending |
 | 05 — Dashboard and PDF Reports | Pending | Pending | Pending |
 | 06 — Testing and Release | Pending | Pending | Pending |
@@ -27,6 +27,7 @@
 - **16 November 2026** — Implemented the branded one-page shell, reporting-month control, panels, web app manifest and versioned offline cache.
 - **17 November 2026** — Merged the Android-tested Feature 01 branch. Started Feature 02 with Owner sign-in, device trust, Dexie storage, department management and an account-scoped cloud schema.
 - **17 November 2026** — Merged Feature 02 into `main`. [Pull request #3](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/3)
+- **17 November 2026** — Implemented the guided daily form, per-date drafts, review, and offline confirmation and corrections. Department selection follows the business date and preserves departments already included in a draft or confirmed entry.
 
 ## Feature 01 verification
 
@@ -44,6 +45,13 @@
 - IndexedDB checks covered department seeding, add and deactivate, preservation of a historical zero entry, and rollback when the pending operation could not be written. Offline sign-out locked access while preserving pending changes for the same Owner's next online sign-in.
 - The migration passed PostgreSQL-compatible checks for one-time department seeding, anonymous and non-Owner isolation, revoked sessions, and unique daily records with retained department history.
 
+## Feature 03 verification
+
+- TypeScript and the static production export passed.
+- Chromium with simulated Auth reopened the PWA offline and restored an unfinished draft after closing the tab. Checks covered 320 and 390 CSS pixel widths, blank-field rejection at every stage, and explicit zero amounts. An all-zero confirmed day appeared in Recent daily records.
+- A forced duplicate pending-operation ID aborted the entire confirmation, preserving the draft. Retry confirmed the day once. Corrections kept record IDs, advanced revisions only for changed records, and stored decimal amounts exactly.
+- IndexedDB checks exercised date-effective department selection, compatibility with older drafts, concurrent draft writes, and rejection of stale confirmations. Calendar and amount checks covered Lusaka midnight, leap dates and the existing cloud amount limits.
+
 ## Next action
 
-[Feature 03 — Guided Daily Entry](FEATURE_ROADMAP.md#feature-03--guided-daily-entry) is next. Set the rules for department selection on past dates and the supported amount range, then implement the dated form, draft saving and corrections.
+Run the [Feature 03 Android checks](README.md#check-feature-03-on-android) on the Vercel preview for Owner acceptance.
