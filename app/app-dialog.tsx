@@ -44,15 +44,13 @@ const reports = [
 const panelNotes = {
   reports: "PDF generation is part of Feature 05.",
   install: "Open this page in Chrome on Android. In the browser menu, choose Install app or Add to Home screen.",
-  sync: "Cloud synchronization is part of Feature 04.",
-  backups: "Creating and restoring backups is part of Feature 04.",
 };
 
 function PanelContent({
   panel,
   setPanel,
 }: {
-  panel: Exclude<AppPanel, "entry" | "departments" | "signOut">;
+  panel: Exclude<AppPanel, "entry" | "departments" | "sync" | "backups" | "signOut">;
   setPanel: (panel: AppPanel) => void;
 }) {
   if (panel === "more") {
@@ -148,7 +146,7 @@ export function AppDialog({
               <X size={21} aria-hidden="true" />
             </button>
           </header>
-          {panel === "entry" || panel === "departments" || panel === "signOut"
+          {panel === "entry" || panel === "departments" || panel === "sync" || panel === "backups" || panel === "signOut"
             ? children
             : <PanelContent panel={panel} setPanel={setPanel} />}
         </div>

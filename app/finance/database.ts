@@ -12,7 +12,7 @@ export interface Department {
   revision: number;
 }
 
-interface SharedExpense {
+export interface SharedExpense {
   id: string;
   date: string;
   expensesMinor: number;
@@ -21,7 +21,7 @@ interface SharedExpense {
   revision: number;
 }
 
-interface DailyRecord extends SharedExpense {
+export interface DailyRecord extends SharedExpense {
   departmentId: string;
   salesMinor: number;
 }
@@ -41,7 +41,7 @@ export interface DailyEntryInputs {
   sharedExpenses: ExpenseInputs;
 }
 
-interface DailyDraft extends DailyEntryInputs {
+export interface DailyDraft extends DailyEntryInputs {
   updatedAt: string;
   version?: string;
 }
@@ -54,20 +54,49 @@ export interface LoadedDailyEntry {
   draftVersion: string | undefined;
 }
 
-type PendingOperation = {
+export type FinanceChange =
+  | { entity: "department"; record: Department }
+  | { entity: "daily-record"; record: DailyRecord }
+  | { entity: "shared-expense"; record: SharedExpense };
+
+export type PendingOperation = {
   sequence?: number;
   id: string;
   recordId: string;
   createdAt: string;
   expectedRevision: number | null;
-} & (
-  | { entity: "department"; record: Department }
-  | { entity: "daily-record"; record: DailyRecord }
-  | { entity: "shared-expense"; record: SharedExpense }
-);
+} & FinanceChange;
+
+export interface SyncConflict {
+  entity: FinanceChange["entity"];
+  recordId: string;
+  operationId?: string;
+}
+
+export interface SyncMetadata {
+  id: "cloud";
+  cursor: number;
+  checkedAt: string | null;
+  conflict: SyncConflict | null;
+}
+
+export interface RecoveryCopy {
+  id: string;
+  date: string;
+  savedAt: string;
+  records: DailyRecord[];
+  sharedExpense?: SharedExpense;
+}
+
+const recoveryLimit = 20;
 
 export class DepartmentError extends Error {}
 export class DailyEntryError extends Error {}
+export class CloudRecordConflict extends Error {
+  constructor(readonly conflict: SyncConflict) {
+    super("The phone and Supabase have different records for the same entry.");
+  }
+}
 
 // The original departments can be used to enter dates before the app was set up.
 const foundingDepartmentIds = new Set([
@@ -113,8 +142,10 @@ export class FinanceDatabase extends Dexie {
   readonly sharedExpenses!: EntityTable<SharedExpense, "id">;
   readonly drafts!: EntityTable<DailyDraft, "date">;
   readonly pendingOperations!: EntityTable<PendingOperation, "sequence">;
+  readonly syncMetadata!: EntityTable<SyncMetadata, "id">;
+  readonly recoveryCopies!: EntityTable<RecoveryCopy, "id">;
 
-  constructor(project: string, readonly ownerId: string) {
+  constructor(readonly project: string, readonly ownerId: string) {
     super("levelgrid-finance:" + project + ":" + ownerId);
     this.version(1).stores({
       departments: "id, position, nameKey",
@@ -122,6 +153,10 @@ export class FinanceDatabase extends Dexie {
       sharedExpenses: "id, &date",
       drafts: "date",
       pendingOperations: "++sequence, &id, [entity+recordId]",
+    });
+    this.version(2).stores({
+      syncMetadata: "id",
+      recoveryCopies: "id, savedAt",
     });
   }
 
@@ -243,7 +278,7 @@ export class FinanceDatabase extends Dexie {
     if (date !== entry.inputs.date) throw new DailyEntryError("Reopen the entry for the selected date.");
 
     return this.transaction(
-      "rw", this.departments, this.dailyRecords, this.sharedExpenses, this.drafts, this.pendingOperations,
+      "rw", [this.departments, this.dailyRecords, this.sharedExpenses, this.drafts, this.pendingOperations, this.recoveryCopies],
       async () => {
         const [allDepartments, records, sharedExpense, draft] = await Promise.all([
           this.departments.orderBy("position").toArray(),
@@ -267,6 +302,8 @@ export class FinanceDatabase extends Dexie {
         const updatedAt = new Date().toISOString();
         const updates: DailyRecord[] = [];
         const operations: PendingOperation[] = [];
+        const previousRecords: DailyRecord[] = [];
+        let previousSharedExpense: SharedExpense | undefined;
         for (const { id: departmentId } of departments) {
           const values = inputs.departments[departmentId];
           if (!values) {
@@ -287,6 +324,7 @@ export class FinanceDatabase extends Dexie {
             expenseComment, updatedAt, revision: (current?.revision ?? 0) + 1,
           };
           updates.push(record);
+          if (current) previousRecords.push(current);
           operations.push({
             id: crypto.randomUUID(), recordId: record.id, entity: "daily-record",
             createdAt: updatedAt, expectedRevision: current?.revision ?? null, record,
@@ -301,6 +339,7 @@ export class FinanceDatabase extends Dexie {
             updatedAt, revision: (sharedExpense?.revision ?? 0) + 1,
           };
           await this.sharedExpenses.put(record);
+          previousSharedExpense = sharedExpense;
           operations.push({
             id: crypto.randomUUID(), recordId: record.id, entity: "shared-expense",
             createdAt: updatedAt, expectedRevision: sharedExpense?.revision ?? null, record,
@@ -308,8 +347,81 @@ export class FinanceDatabase extends Dexie {
         }
         if (updates.length > 0) await this.dailyRecords.bulkPut(updates);
         if (operations.length > 0) await this.pendingOperations.bulkAdd(operations);
+        if (previousRecords.length > 0 || previousSharedExpense) {
+          await this.recoveryCopies.add({
+            id: crypto.randomUUID(), date, savedAt: updatedAt, records: previousRecords, sharedExpense: previousSharedExpense,
+          });
+          await this.trimRecoveryCopies();
+        }
         await this.drafts.delete(date);
       },
     );
+  }
+
+  async cloudState(): Promise<SyncMetadata> {
+    return await this.syncMetadata.get("cloud") ?? { id: "cloud", cursor: 0, checkedAt: null, conflict: null };
+  }
+
+  acknowledgeUpload(acknowledged: PendingOperation[], conflict: SyncConflict | null) {
+    return this.transaction("rw", this.pendingOperations, this.syncMetadata, async () => {
+      for (const operation of acknowledged) {
+        if (operation.sequence === undefined) throw new Error("Missing queue position");
+        const saved = await this.pendingOperations.get(operation.sequence);
+        if (saved?.id === operation.id) await this.pendingOperations.delete(operation.sequence);
+      }
+      await this.syncMetadata.put({ ...await this.cloudState(), conflict });
+    });
+  }
+
+  applyCloudPage(previousCursor: number, cursor: number, changes: FinanceChange[], complete: boolean) {
+    return this.transaction(
+      "rw", [this.departments, this.dailyRecords, this.sharedExpenses, this.pendingOperations, this.syncMetadata],
+      async () => {
+        const state = await this.cloudState();
+        if (state.cursor !== previousCursor) return false;
+        for (const change of changes) {
+          await this.applyCloudRecord(change);
+        }
+        await this.syncMetadata.put({
+          ...state, cursor, conflict: null, checkedAt: complete ? new Date().toISOString() : state.checkedAt,
+        });
+        return true;
+      },
+    );
+  }
+
+  private async applyCloudRecord(change: FinanceChange) {
+    const { entity, record } = change;
+    if (await this.pendingOperations.where("[entity+recordId]").equals([entity, record.id]).first()) return;
+
+    if (entity === "department") {
+      const sameName = await this.departments.where("nameKey").equals(record.nameKey)
+        .and((row) => row.id !== record.id && row.deactivatedAt === null).first();
+      if (sameName && record.deactivatedAt === null) {
+        throw new CloudRecordConflict({ entity, recordId: sameName.id });
+      }
+      const previous = await this.departments.get(record.id);
+      if (!previous || previous.revision <= record.revision) await this.departments.put(record);
+    } else if (entity === "daily-record") {
+      const previous = await this.dailyRecords.where("[departmentId+date]").equals([record.departmentId, record.date]).first();
+      if (previous && previous.id !== record.id) {
+        throw new CloudRecordConflict({ entity, recordId: previous.id });
+      }
+      if (!previous || previous.revision <= record.revision) await this.dailyRecords.put(record);
+    } else {
+      const previous = await this.sharedExpenses.where("date").equals(record.date).first();
+      if (previous && previous.id !== record.id) {
+        throw new CloudRecordConflict({ entity, recordId: previous.id });
+      }
+      if (!previous || previous.revision <= record.revision) await this.sharedExpenses.put(record);
+    }
+  }
+
+  async trimRecoveryCopies() {
+    const excess = await this.recoveryCopies.count() - recoveryLimit;
+    if (excess > 0) {
+      const oldest = await this.recoveryCopies.orderBy("savedAt").limit(excess).primaryKeys();
+      await this.recoveryCopies.bulkDelete(oldest);
+    }
   }
 }

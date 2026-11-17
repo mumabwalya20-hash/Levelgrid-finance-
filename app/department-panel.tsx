@@ -7,10 +7,12 @@ export function DepartmentPanel({
   database,
   departments,
   readFailed,
+  onSaved,
 }: {
   database: FinanceDatabase;
   departments: Department[] | undefined;
   readFailed: boolean;
+  onSaved: () => void;
 }) {
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -23,6 +25,7 @@ export function DepartmentPanel({
     try {
       await change();
       setFeedback("Change saved on this phone.");
+      onSaved();
     } catch (error) {
       setFeedback(error instanceof DepartmentError ? error.message : "Couldn't save the change. Try again.");
     } finally {

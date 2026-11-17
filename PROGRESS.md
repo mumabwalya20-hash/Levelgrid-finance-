@@ -6,8 +6,8 @@
 | --- | --- |
 | Revised master blueprint | Approved by the Owner on 16 November 2026 |
 | Feature roadmap | Approved |
-| Application implementation | Features 01–03 implemented. Feature 04 is next |
-| Application tests | Feature 03 static build, offline browser checks and Owner Android testing passed |
+| Application implementation | Features 01–03 merged. Feature 04 implemented on its review branch |
+| Application tests | Feature 04 static build, database checks and offline browser checks passed. Owner Android check pending |
 
 ## Feature tracker
 
@@ -16,7 +16,7 @@
 | 01 — Foundation and One-Page PWA | Implemented | Static build, types, installability, panel navigation and offline reopen verified in Chromium | Owner Android check passed on 17 November 2026 |
 | 02 — Authentication and Offline Database | Implemented | Static build, Chromium with simulated Supabase Auth and PostgreSQL-compatible schema tests passed | Owner reported Feature 02 passed on 17 November 2026 |
 | 03 — Guided Daily Entry | Implemented | TypeScript, static build, phone-size Chromium and IndexedDB checks passed | Owner confirmed the Android test passed on 17 November 2026 |
-| 04 — Reliable Sync and Recovery | Pending | Pending | Pending |
+| 04 — Reliable Sync and Recovery | Implemented | PostgreSQL-compatible migration and browser checks passed | Owner Android check pending after Supabase migration |
 | 05 — Dashboard and PDF Reports | Pending | Pending | Pending |
 | 06 — Testing and Release | Pending | Pending | Pending |
 
@@ -29,6 +29,8 @@
 - **17 November 2026** — Merged Feature 02 into `main`. [Pull request #3](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/3)
 - **17 November 2026** — Implemented the guided daily form, per-date drafts, review, and offline confirmation and corrections. Department selection follows the business date and preserves departments already included in a draft or confirmed entry.
 - **17 November 2026** — The Owner approved Feature 03 and requested one address for phone testing. The `testing` branch is used for every Vercel Preview at that address. [Owner test address](https://levelgrid-finance.vercel.app/)
+- **17 November 2026** — Merged Feature 03 and published it at the fixed test address from `testing`. [Pull request #4](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/4)
+- **17 November 2026** — Implemented incremental Supabase sync, upload receipts, revision conflict protection, the latest 20 correction copies and emergency backup and restore.
 
 ## Feature 01 verification
 
@@ -53,6 +55,13 @@
 - A forced duplicate pending-operation ID aborted the entire confirmation, preserving the draft. Retry confirmed the day once. Corrections kept record IDs, advanced revisions only for changed records, and stored decimal amounts exactly.
 - IndexedDB checks exercised date-effective department selection, compatibility with older drafts, concurrent draft writes, and rejection of stale confirmations. Calendar and amount checks covered Lusaka midnight, leap dates and the existing cloud amount limits.
 
+## Feature 04 verification
+
+- TypeScript and the static production export passed. Existing records and pending operations survived an IndexedDB upgrade at the same origin.
+- Applied the migration to PostgreSQL-compatible fixtures with existing records. Checked Owner-only RPC access, revoked sessions, bounded pages, exact amounts, retry receipts and expected revisions.
+- Chromium with simulated Auth and real PostgreSQL-compatible sync functions covered a missing migration, a cloud commit with a lost acknowledgement, a newer correction made during upload, reconnect, and a conflict that kept the phone and cloud versions.
+- Recovered previous values into a draft. On a fresh browser, restored the cloud copy, rejected a backup for another Owner, then restored a valid backup with offline entries and a draft.
+
 ## Next action
 
-Implement Feature 04 and deploy it from `testing` for Owner acceptance.
+Apply the Feature 04 migration in the Owner's Supabase project and run the [Feature 04 Android checks](README.md#check-feature-04-on-android) at the fixed test address.

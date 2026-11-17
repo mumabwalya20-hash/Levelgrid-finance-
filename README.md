@@ -81,3 +81,21 @@ Launch the app from the [test address](https://levelgrid-finance.vercel.app/) an
 6. Tap that day's **View / Edit**, select a department on the review screen and change a figure to `0.29`. Save and reopen to verify the exact amount and a single record for that date in the recent list.
 
 Feature 03 uses the existing Supabase setup. Confirmed entries and drafts are stored on the phone under the preview address. Feature 04 adds cloud synchronization.
+
+## Enable Feature 04
+
+Run the [Feature 04 migration](supabase/migrations/20261117000004_finance_sync.sql) once in the SQL Editor of the existing Finance Supabase project. It runs after the Feature 02 migration and keeps the existing Owner and tables. The first online sync will also upload changes already awaiting sync on the phone.
+
+## Check Feature 04 on Android
+
+Close and reopen the installed app while online at the existing [test address](https://levelgrid-finance.vercel.app/).
+
+1. Turn off Wi-Fi and mobile data. Confirm a day with test figures and check the pending notice on the main page.
+2. Reconnect. Open **More → Sync Now** and wait for **Your saved entries are up to date**. Reopen and correct the day, then check that the pending notice clears again.
+3. In **More → Backups**, choose **Load into draft** beside the correction. Check the earlier figures in **Enter Daily Sales** and review them before confirming.
+4. Download an emergency backup while offline with a test draft or pending change. The file contains financial data, so keep it in a private location away from the phone.
+5. On a fresh browser profile, sign in at the same address with the same Owner. Verify the cloud-restored dates. In **More → Backups**, choose the downloaded file, review its contents and select **Restore backup**. Confirm that the draft or pending changes are present.
+
+For a phone replacement, sign in with the same Owner and let the cloud check finish before making new entries. The emergency backup also recovers work that had not reached Supabase. Restore it on a device with no unfinished drafts or pending changes of its own.
+
+If sync pauses on a conflict, use **More → Sync Now** to find the conflicting record ID and **Open Backups** to export the phone's data. Keep the file and compare the phone values with the Supabase record before deciding how to reconcile them. Pending changes stay on the phone during this review.
