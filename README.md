@@ -2,7 +2,7 @@
 
 Levelgrid Finance is a planned private Android PWA for recording daily sales and expenses in ZMW, viewing balances and generating PDF reports.
 
-Feature 01 provides the one-page application shell and offline startup. The [progress tracker](PROGRESS.md) records verification and acceptance.
+The [progress tracker](PROGRESS.md) records implementation, verification and acceptance.
 
 | File | Contents |
 | --- | --- |
@@ -25,18 +25,22 @@ Deploy the `out/` directory on static HTTPS hosting. For a Vercel preview, set t
 
 To serve the production build on the build computer, run `python3 -m http.server 4173 --bind 127.0.0.1 --directory out` and open [localhost port 4173](http://127.0.0.1:4173/).
 
+## Vercel phone testing
+
+Deploy the `testing` branch to the Levelgrid Finance project as a Vercel Preview. When the deployment is ready, assign the existing test address to it and verify the address serves the intended `testing` commit. [Open Levelgrid Finance](https://levelgrid-finance.vercel.app/)
+
+Install the PWA from that address once. To load a new preview, close the installed app and any Chrome tabs for the address, then reopen it online. Keep the phone's site data so the same installation keeps drafts and pending changes.
+
 ## Check Feature 01 on Android
 
-Use the Feature 01 staging build for these checks.
-
-1. Open the HTTPS preview in Chrome and wait for **Ready offline** in the app footer.
+1. Open the [test address](https://levelgrid-finance.vercel.app/) in Chrome and wait for **Ready offline** in the app footer.
 2. Open Chrome's menu and select **Install app** or **Add to Home screen**. Launch the app from the home screen.
 3. Select a reporting month. Open and close **Enter Daily Sales**, **PDF Reports**, **Departments**, and **More** from the main page.
 4. Turn off Wi-Fi and mobile data. Close the app, then reopen it from the home screen. Check that the main page and panels open and the footer shows **Offline**.
 
 ## Set up Feature 02 for testing
 
-1. Use a dedicated Supabase testing project. In Authentication settings, enable email/password sign-in and disable new user sign-ups.
+1. Open the Supabase project configured for the preview. In Authentication settings, enable email/password sign-in and disable new user sign-ups.
 2. Run the [Feature 02 migration](supabase/migrations/20261117000000_finance_foundation.sql) in that project's SQL Editor. Keep the `finance_private` schema outside the Data API's exposed schemas.
 3. Create an email/password test Owner in **Authentication → Users**. Confirm the user and copy its UUID. Replace the placeholder in this SQL and run it in the testing project's SQL Editor. This registers the Owner and seeds all five operating departments once.
 
@@ -46,7 +50,7 @@ values ('YOUR_TEST_OWNER_UUID'::uuid)
 on conflict (user_id) do nothing;
 ```
 
-Set the following variables in the Vercel **Preview** environment, then deploy the Feature 02 branch with the static build settings above.
+Set the following variables in the Vercel **Preview** environment, then deploy `testing` with the static build settings above.
 
 | Variable | Value |
 | --- | --- |
@@ -57,10 +61,23 @@ The static build embeds both values in the browser bundle. Enter the Owner passw
 
 ## Check Feature 02 on Android
 
-1. Open the Feature 02 preview URL in Chrome and install it. Use the same URL throughout the test so the app can reopen the same local database.
+1. Launch the installed app from the [test address](https://levelgrid-finance.vercel.app/).
 2. Before the first sign-in, go offline and reopen. Check that the sign-in screen stays locked. Reconnect and check that an incorrect password leaves the screen locked.
 3. Sign in online with **Trust this device for offline access** selected. Check that Departments shows the five operating departments and the footer says **Ready offline**.
 4. Go offline, close the app, and reopen it from the home screen. Add a test department and deactivate it in the same panel. Check that it appears in **Inactive departments** and that the main page shows the pending changes.
 5. Use **More → Sign out** while offline. Reopen the app and check that it asks you to sign in. Reconnect and sign in with the same Owner. Check that the inactive department and pending changes are still there.
 
 Department changes are saved on the device with their pending operations. Cloud synchronization of those changes is part of Feature 04.
+
+## Check Feature 03 on Android
+
+Launch the app from the [test address](https://levelgrid-finance.vercel.app/) and sign in with the configured Owner account. Select **Trust this device for offline access** and wait for **Ready offline**. Use test figures in the preview.
+
+1. Turn off Wi-Fi and mobile data. Open **Enter Daily Sales**, choose today or an earlier date and continue.
+2. Enter `0` in Expense amount and leave Sales amount blank. Tap **Next** and check that the form stays on the same step. Enter `0` in Sales amount, clear Expense amount and repeat the check.
+3. Fill both amounts and add a test comment. When **Draft saved on this phone** appears, close and reopen the preview while offline. Tap **Enter Daily Sales** and **Resume draft**. Use **Previous** if needed to check the two amounts and comment.
+4. Enter an amount in every department field. On Finance Expenses, tap **Review entry** with the amount blank to check that it is required. Type `0` and continue to review.
+5. Check the figures, then tap **Confirm and save** and **Done**. Check that the date appears under **Recent daily records** and that the app shows pending changes.
+6. Tap that day's **View / Edit**, select a department on the review screen and change a figure to `0.29`. Save and reopen to verify the exact amount and a single record for that date in the recent list.
+
+Feature 03 uses the existing Supabase setup. Confirmed entries and drafts are stored on the phone under the preview address. Feature 04 adds cloud synchronization.
