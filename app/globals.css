@@ -716,6 +716,17 @@ p {
   line-height: 1.5;
 }
 
+.sync-notice {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.sync-record-id {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .department-row {
   display: flex;
   align-items: center;

@@ -6,6 +6,7 @@ import {
   type SupabaseClient,
 } from "@supabase/supabase-js";
 import { FinanceDatabase } from "./database";
+import { departmentFromCloud, syncFinance, type CloudDepartment, type SyncStatus } from "./sync";
 
 const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -18,16 +19,6 @@ interface SessionProof {
 
 interface DeviceTrust extends SessionProof {
   deviceId: string;
-}
-
-interface CloudDepartment {
-  id: string;
-  name: string;
-  position: number;
-  created_at: string;
-  updated_at: string;
-  deactivated_at: string | null;
-  revision: number;
 }
 
 export type OwnerAccess =
@@ -96,8 +87,14 @@ export class OwnerSession {
   private generation = 0;
   private disposed = false;
   private operations = Promise.resolve();
+  private verifiedUntil = 0;
+  private syncRequested = false;
+  private syncScheduled = false;
 
-  constructor(private readonly show: (access: OwnerAccess) => void) {}
+  constructor(
+    private readonly show: (access: OwnerAccess) => void,
+    private readonly showSync: (status: SyncStatus) => void,
+  ) {}
 
   start() {
     if (!projectUrl || !publishableKey) {
@@ -160,6 +157,7 @@ export class OwnerSession {
         }
         if (navigator.onLine || trustDevice) {
           this.show({ screen: "finance", database, offline: !navigator.onLine, trusted: trustDevice });
+          if (navigator.onLine) this.startVerifiedSync(data.session);
         } else {
           this.lock("Connect to the internet to open your records.");
         }
@@ -191,6 +189,37 @@ export class OwnerSession {
     return true;
   }
 
+  syncNow() {
+    if (!navigator.onLine || !this.database || this.disposed) return;
+    if (this.verifiedUntil < Date.now() + 60_000) {
+      void this.checkAccess(false);
+      return;
+    }
+
+    this.syncRequested = true;
+    if (this.syncScheduled) return;
+    this.syncScheduled = true;
+    const generation = this.generation;
+    void this.serialize(async () => {
+      this.syncRequested = false;
+      const active = () => this.isCurrent(generation) && navigator.onLine && this.verifiedUntil > Date.now();
+      if (!active() || !this.database || !this.client) return;
+      this.showSync("working");
+      const status = await syncFinance(this.database, this.client, active);
+      if (this.isCurrent(generation)) this.showSync(status);
+    }).catch(() => {
+      if (this.isCurrent(generation)) this.showSync("retry");
+    }).finally(() => {
+      this.syncScheduled = false;
+      if (this.syncRequested) this.syncNow();
+    });
+  }
+
+  private startVerifiedSync(session: Session) {
+    this.verifiedUntil = session.expires_at ? session.expires_at * 1000 : Date.now() + session.expires_in * 1000;
+    if (this.verifiedUntil >= Date.now() + 60_000) this.syncNow();
+  }
+
   private readonly onVisibility = () => {
     if (document.visibilityState === "visible") this.resume();
   };
@@ -215,6 +244,7 @@ export class OwnerSession {
   };
 
   private readonly resume = () => {
+    this.verifiedUntil = 0;
     void this.checkAccess(false);
   };
 
@@ -261,6 +291,7 @@ export class OwnerSession {
 
         if (navigator.onLine || trusted) {
           this.show({ screen: "finance", database, offline: !navigator.onLine, trusted: trusted !== null });
+          if (navigator.onLine) this.startVerifiedSync(data.session);
         } else {
           this.lock("Connect to the internet to open your records.");
         }
@@ -296,6 +327,8 @@ export class OwnerSession {
       throw new AccessError("Connect to the internet to finish setting up this phone.", "setup");
     }
     if (this.isCurrent(generation) && readTrust()?.deviceId === trusted.deviceId) {
+      this.verifiedUntil = 0;
+      this.showSync("idle");
       this.show({ screen: "finance", database, offline: true, trusted: true });
     }
   }
@@ -311,16 +344,7 @@ export class OwnerSession {
       if (result.error) throw databaseAccessError(result.status);
       if (!result.data?.length) throw new AccessError("This account does not have Owner access.", "denied");
 
-      await database.initializeDepartments(result.data.map((row) => ({
-        id: row.id,
-        name: row.name,
-        nameKey: row.name.toLowerCase(),
-        position: row.position,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        deactivatedAt: row.deactivated_at,
-        revision: row.revision,
-      })));
+      await database.initializeDepartments(result.data.map(departmentFromCloud));
     } else {
       const result = await client.from("finance_departments").select("id").limit(1);
       if (result.error) throw databaseAccessError(result.status);
@@ -379,6 +403,9 @@ export class OwnerSession {
   }
 
   private lock(message?: string) {
+    this.verifiedUntil = 0;
+    this.syncRequested = false;
+    this.showSync("idle");
     this.closeDatabase();
     this.show({ screen: "sign-in", message });
   }

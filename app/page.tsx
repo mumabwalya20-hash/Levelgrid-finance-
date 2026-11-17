@@ -17,12 +17,15 @@ import {
 import { liveQuery } from "dexie";
 import { useEffect, useRef, useState } from "react";
 import { AppDialog, type AppPanel } from "./app-dialog";
+import { BackupsPanel } from "./backups-panel";
 import { DailyEntryPanel } from "./daily-entry-panel";
 import { DepartmentPanel } from "./department-panel";
 import { businessDate, formatEntryDate } from "./finance/daily-entry";
-import type { Department, FinanceDatabase } from "./finance/database";
+import type { Department, FinanceDatabase, SyncMetadata } from "./finance/database";
 import { OwnerSession, type OwnerAccess } from "./finance/owner-session";
+import type { SyncStatus } from "./finance/sync";
 import { OwnerSignIn } from "./owner-sign-in";
+import { SyncPanel } from "./sync-panel";
 import { useAppStatus } from "./use-app-status";
 
 const reportMonthFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -70,12 +73,18 @@ function AppHeader({ onMore }: { onMore?: () => void }) {
   );
 }
 
-function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; signOut: () => boolean }) {
+function FinanceWorkspace({ database, online, syncStatus, syncNow, signOut }: {
+  database: FinanceDatabase;
+  online: boolean;
+  syncStatus: SyncStatus;
+  syncNow: () => void;
+  signOut: () => boolean;
+}) {
   const [month, setMonth] = useState("");
   const [panel, setPanel] = useState<AppPanel | null>(null);
   const [entryDate, setEntryDate] = useState<string>();
   const [recent, setRecent] = useState<{ month: string; dates: string[]; failed?: boolean }>();
-  const [saved, setSaved] = useState<{ departments: Department[]; pendingCount: number }>();
+  const [saved, setSaved] = useState<{ departments: Department[]; pendingCount: number; sync: SyncMetadata }>();
   const [readFailed, setReadFailed] = useState(false);
   const [signOutFailed, setSignOutFailed] = useState(false);
 
@@ -88,9 +97,11 @@ function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; si
       "r",
       database.departments,
       database.pendingOperations,
+      database.syncMetadata,
       async () => ({
         departments: await database.departments.orderBy("position").toArray(),
         pendingCount: await database.pendingOperations.count(),
+        sync: await database.cloudState(),
       }),
     )).subscribe({ next: setSaved, error: () => setReadFailed(true) });
     return () => subscription.unsubscribe();
@@ -120,6 +131,12 @@ function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; si
           <p className="pending-notice" role="status">
             {pending} {pending === 1 ? "change is" : "changes are"} saved only on this phone.
           </p>
+        )}
+        {saved?.sync.conflict && (
+          <div className="pending-notice sync-notice">
+            <p role="alert">Sync paused. Your phone's values are still saved.</p>
+            <button className="action" type="button" onClick={() => setPanel("sync")}>View sync status</button>
+          </div>
         )}
         <section className="reporting-period" aria-label="Reporting period">
           <button
@@ -252,17 +269,30 @@ function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; si
         </section>
       </div>
 
-      <AppDialog panel={panel} setPanel={setPanel}>
+      <AppDialog panel={panel} setPanel={(next) => {
+        setPanel(next);
+        if (next === "sync") syncNow();
+      }}>
         {panel === "entry" && (
           <DailyEntryPanel
             database={database}
             initialDate={entryDate}
-            onSaved={(date) => setMonth(date.slice(0, 7))}
+            onSaved={(date) => {
+              setMonth(date.slice(0, 7));
+              syncNow();
+            }}
             onClose={() => setPanel(null)}
           />
         )}
         {panel === "departments" && (
-          <DepartmentPanel database={database} departments={saved?.departments} readFailed={readFailed} />
+          <DepartmentPanel database={database} departments={saved?.departments} readFailed={readFailed} onSaved={syncNow} />
+        )}
+        {panel === "sync" && (
+          <SyncPanel state={saved?.sync} status={syncStatus} pending={pending} online={online}
+            syncNow={syncNow} openBackups={() => setPanel("backups")} />
+        )}
+        {panel === "backups" && (
+          <BackupsPanel database={database} onRestore={syncNow} onOpenEntry={openEntry} />
         )}
         {panel === "signOut" && (
           <div className="sign-out-panel">
@@ -284,11 +314,12 @@ function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; si
 
 export default function FinancePage() {
   const [access, setAccess] = useState<OwnerAccess>({ screen: "checking" });
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const session = useRef<OwnerSession | null>(null);
-  const { isOnline, offlineStatus } = useAppStatus();
+  const { isOnline, offlineStatus, updateReady } = useAppStatus();
 
   useEffect(() => {
-    const owner = new OwnerSession(setAccess);
+    const owner = new OwnerSession(setAccess, setSyncStatus);
     session.current = owner;
     owner.start();
     return () => {
@@ -308,6 +339,9 @@ export default function FinancePage() {
         <FinanceWorkspace
           key={access.database.name}
           database={access.database}
+          online={connected === true}
+          syncStatus={syncStatus}
+          syncNow={() => session.current?.syncNow()}
           signOut={() => session.current?.signOut() ?? false}
         />
       ) : (
@@ -330,7 +364,9 @@ export default function FinancePage() {
           />
           {connected === null ? "Checking connection" : connected ? "Online" : "Offline"}
         </span>
-        <span>{appStatus}</span>
+        {updateReady ? (
+          <button className="action" type="button" onClick={() => window.location.reload()}>Update app</button>
+        ) : <span>{appStatus}</span>}
       </footer>
     </main>
   );

@@ -21,10 +21,17 @@ const shellFiles = [
 
 const worker = String.raw`
 self.addEventListener("install", (event) => {
-  // Keep the shell and its hashed assets from the same build.
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) =>
-    cache.addAll(APP_FILES.map((url) => new Request(url, { cache: "reload" })))
-  ));
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+      await cache.addAll(APP_FILES.map((url) => new Request(url, { cache: "reload" })));
+    } catch (error) {
+      await caches.delete(CACHE_NAME);
+      throw error;
+    }
+    // Activate only after the entire new shell can open offline.
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", (event) => {
@@ -32,7 +39,8 @@ self.addEventListener("activate", (event) => {
     const oldCaches = (await caches.keys()).filter(
       (name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME
     );
-    await Promise.all(oldCaches.map((name) => caches.delete(name)));
+    // Older open pages can still request their own hashed assets.
+    await Promise.all(oldCaches.slice(0, -2).map((name) => caches.delete(name)));
     await self.clients.claim();
   })());
 });
@@ -41,11 +49,13 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
-  if (!APP_FILE_PATHS.has(url.pathname)) return;
+  const currentAsset = APP_FILE_PATHS.has(url.pathname);
+  if (!currentAsset && !url.pathname.startsWith("/_next/static/")) return;
 
   event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(url.pathname);
+    const cached = currentAsset
+      ? await caches.match(url.pathname, { cacheName: CACHE_NAME })
+      : await caches.match(url.pathname);
     return cached ?? fetch(request);
   })());
 });

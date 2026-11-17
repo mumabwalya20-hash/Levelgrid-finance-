@@ -73,9 +73,13 @@ Implement online-save, open/foreground, reconnect and manual sync triggers. Batc
 
 Retry after cloud success with the acknowledgement interrupted and verify one cloud result. Verify that acknowledgement of an earlier edit leaves a newer unsynced edit pending. Confirm that an unexpected cloud revision preserves the local edit and surfaces a conflict. Recover prior values after a correction, recover synchronized data on a fresh installation, and verify recovery using an emergency backup. Check the notice for changes that exist only on the phone.
 
-### Design details to settle
+### Recovery and conflicts
 
-Define rolling recovery retention, the restore and conflict resolution flows, and which local records and pending operations a backup must preserve for safe recovery.
+Keep the latest 20 correction copies on the phone. Load an earlier correction copy into a draft for review and confirmation. A new installation downloads confirmed records and departments from Supabase after sign-in.
+
+The emergency JSON file includes departments, confirmed records, drafts, pending operations and correction copies for the same project and Owner. Backup restore preserves newer synchronized values and restores the queue in its original order.
+
+A sync conflict pauses the queue and identifies the record. The phone's version and pending changes remain available for backup and comparison with Supabase before any reconciliation.
 
 ## Feature 05 — Dashboard and PDF Reports
 

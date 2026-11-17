@@ -20,12 +20,16 @@ export function businessDate(at = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
-export function isEntryDate(date: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date.startsWith("0000") || date > businessDate()) {
+export function isCalendarDate(date: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date.startsWith("0000")) {
     return false;
   }
   const parsed = new Date(date + "T00:00:00Z");
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
+}
+
+export function isEntryDate(date: string) {
+  return isCalendarDate(date) && date <= businessDate();
 }
 
 export function formatEntryDate(date: string) {
