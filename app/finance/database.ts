@@ -107,6 +107,13 @@ const foundingDepartmentIds = new Set([
   "16000000-0000-4000-8000-000000000005",
 ]);
 
+export function departmentDates(department: Department) {
+  return {
+    openedOn: foundingDepartmentIds.has(department.id) ? "0001-01-01" : businessDate(new Date(department.createdAt)),
+    closedOn: department.deactivatedAt ? businessDate(new Date(department.deactivatedAt)) : null,
+  };
+}
+
 function departmentsForDate(
   departments: Department[],
   date: string,
@@ -114,12 +121,11 @@ function departmentsForDate(
   draft?: DailyEntryInputs,
 ) {
   const recorded = new Set(records.map((record) => record.departmentId));
-  return departments.filter((department) =>
-    recorded.has(department.id) || draft?.departments[department.id] !== undefined || (
-      (foundingDepartmentIds.has(department.id) || businessDate(new Date(department.createdAt)) <= date) &&
-      (department.deactivatedAt === null || date < businessDate(new Date(department.deactivatedAt)))
-    ),
-  );
+  return departments.filter((department) => {
+    if (recorded.has(department.id) || draft?.departments[department.id] !== undefined) return true;
+    const { openedOn, closedOn } = departmentDates(department);
+    return openedOn <= date && (closedOn === null || date < closedOn);
+  });
 }
 
 function draftVersion(draft: DailyDraft | undefined) {
@@ -215,18 +221,6 @@ export class FinanceDatabase extends Dexie {
 
   async latestDraftDate() {
     return (await this.drafts.orderBy("date").last())?.date;
-  }
-
-  recentEntryDates(month: string) {
-    return this.transaction("r", this.dailyRecords, this.sharedExpenses, async () => {
-      const start = month + "-01";
-      const end = month + "-31";
-      const [recordDates, expenseDates] = await Promise.all([
-        this.dailyRecords.where("date").between(start, end, true, true).uniqueKeys(),
-        this.sharedExpenses.where("date").between(start, end, true, true).uniqueKeys(),
-      ]);
-      return [...new Set([...recordDates, ...expenseDates] as string[])].sort().reverse().slice(0, 5);
-    });
   }
 
   loadDailyEntry(date: string): Promise<LoadedDailyEntry> {

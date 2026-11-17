@@ -6,8 +6,8 @@
 | --- | --- |
 | Revised master blueprint | Approved by the Owner on 16 November 2026 |
 | Feature roadmap | Approved |
-| Application implementation | Features 01–04 implemented. Feature 05 is next |
-| Application tests | Feature 04 static build, database checks, offline browser checks and Owner testing passed |
+| Application implementation | Features 01–05 implemented. Feature 06 is next |
+| Application tests | Feature 05 build, offline browser checks, PDF reconciliation and Owner Android testing passed |
 
 ## Feature tracker
 
@@ -17,7 +17,7 @@
 | 02 — Authentication and Offline Database | Implemented | Static build, Chromium with simulated Supabase Auth and PostgreSQL-compatible schema tests passed | Owner reported Feature 02 passed on 17 November 2026 |
 | 03 — Guided Daily Entry | Implemented | TypeScript, static build, phone-size Chromium and IndexedDB checks passed | Owner confirmed the Android test passed on 17 November 2026 |
 | 04 — Reliable Sync and Recovery | Implemented | PostgreSQL-compatible migration and browser checks passed | Owner confirmed Feature 04 passed on 17 November 2026 |
-| 05 — Dashboard and PDF Reports | Pending | Pending | Pending |
+| 05 — Dashboard and PDF Reports | Implemented | Offline dashboard, four PDF formats and pagination checked with synthetic records | Owner confirmed the Android test passed on 17 November 2026 |
 | 06 — Testing and Release | Pending | Pending | Pending |
 
 ## Decision log
@@ -32,6 +32,8 @@
 - **17 November 2026** — Merged Feature 03 and published it at the fixed test address from `testing`. [Pull request #4](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/4)
 - **17 November 2026** — Implemented incremental Supabase sync, upload receipts, revision conflict protection, the latest 20 correction copies and emergency backup and restore.
 - **17 November 2026** — The Owner accepted Feature 04 and authorized Feature 05. [Pull request #5](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/5)
+- **17 November 2026** — Implemented month and day dashboard filters, departmental totals, recent record balances and four offline PDF report types.
+- **17 November 2026** — The Owner accepted Feature 05 after Android testing. [Pull request #6](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/6)
 
 ## Feature 01 verification
 
@@ -64,6 +66,12 @@
 - Recovered previous values into a draft. On a fresh browser, restored the cloud copy, rejected a backup for another Owner, then restored a valid backup with offline entries and a draft.
 - Reproduced the older Feature 02 placeholders at the fixed address while an earlier app window remained open. Verified that the new shell activates after its assets are cached. A normal refresh loaded Features 03 and 04 while the earlier tab remained open. A failed shell install kept offline access working, and an update preserved pending changes and a saved draft.
 
+## Feature 05 verification
+
+- TypeScript and the static export passed. Chromium reopened offline and downloaded daily business, monthly combined, department and custom date-range PDFs. Reporting generated no Supabase requests while offline.
+- Matched dashboard and PDF amounts to synthetic entries with Finance Expenses, inactive department history, pending work, missing and incomplete dates, confirmed zeros and a live correction. Totals remained exact for negative values and combined figures above JavaScript's safe integer range.
+- Checked 320 and 390 pixel dashboard layouts, the rendered A4 PDFs, repeated table headings and multi-page numbering. Feature 04 sync, backup, recovery and update checks continued to pass.
+
 ## Next action
 
-Implement Feature 05 and deploy the dashboard and PDF reports from `testing` for Owner acceptance.
+Run the Feature 06 end-to-end release checks and record the Owner's release decision.

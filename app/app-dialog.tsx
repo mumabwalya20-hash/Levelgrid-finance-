@@ -34,23 +34,11 @@ const moreActions = [
   { panel: "signOut", icon: LogOut },
 ] as const satisfies ReadonlyArray<{ panel: AppPanel; icon: typeof Download }>;
 
-const reports = [
-  "Daily business report",
-  "Monthly combined financial summary",
-  "Department-specific report",
-  "Custom date-range report",
-];
-
-const panelNotes = {
-  reports: "PDF generation is part of Feature 05.",
-  install: "Open this page in Chrome on Android. In the browser menu, choose Install app or Add to Home screen.",
-};
-
 function PanelContent({
   panel,
   setPanel,
 }: {
-  panel: Exclude<AppPanel, "entry" | "departments" | "sync" | "backups" | "signOut">;
+  panel: "more" | "settings" | "install";
   setPanel: (panel: AppPanel) => void;
 }) {
   if (panel === "more") {
@@ -77,16 +65,7 @@ function PanelContent({
     );
   }
 
-  return (
-    <>
-      {panel === "reports" && (
-        <ul className="panel-list">
-          {reports.map((item) => <li key={item}>{item}</li>)}
-        </ul>
-      )}
-      <p className="panel-note">{panelNotes[panel]}</p>
-    </>
-  );
+  return <p className="panel-note">Open this page in Chrome on Android. In the browser menu, choose Install app or Add to Home screen.</p>;
 }
 
 export function AppDialog({
@@ -146,9 +125,9 @@ export function AppDialog({
               <X size={21} aria-hidden="true" />
             </button>
           </header>
-          {panel === "entry" || panel === "departments" || panel === "sync" || panel === "backups" || panel === "signOut"
-            ? children
-            : <PanelContent panel={panel} setPanel={setPanel} />}
+          {panel === "more" || panel === "settings" || panel === "install"
+            ? <PanelContent panel={panel} setPanel={setPanel} />
+            : children}
         </div>
       )}
     </dialog>

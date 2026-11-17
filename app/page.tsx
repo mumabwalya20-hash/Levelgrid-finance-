@@ -1,45 +1,22 @@
 "use client";
 
-import {
-  Building2,
-  CalendarDays,
-  ChartNoAxesColumnIncreasing,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CirclePlus,
-  ClipboardList,
-  Ellipsis,
-  FileText,
-  ReceiptText,
-  Wallet,
-} from "lucide-react";
+import { Building2, CirclePlus, Ellipsis, FileText } from "lucide-react";
 import { liveQuery } from "dexie";
 import { useEffect, useRef, useState } from "react";
 import { AppDialog, type AppPanel } from "./app-dialog";
 import { BackupsPanel } from "./backups-panel";
+import { FinancialSummary, PeriodSelector, RecentDailyRecords } from "./dashboard";
 import { DailyEntryPanel } from "./daily-entry-panel";
 import { DepartmentPanel } from "./department-panel";
-import { businessDate, formatEntryDate } from "./finance/daily-entry";
+import { businessDate } from "./finance/daily-entry";
 import type { Department, FinanceDatabase, SyncMetadata } from "./finance/database";
 import { OwnerSession, type OwnerAccess } from "./finance/owner-session";
+import { loadFinanceReport, periodForDate, type FinanceReport, type PeriodMode } from "./finance/reporting";
 import type { SyncStatus } from "./finance/sync";
 import { OwnerSignIn } from "./owner-sign-in";
+import { ReportsPanel } from "./reports-panel";
 import { SyncPanel } from "./sync-panel";
 import { useAppStatus } from "./use-app-status";
-
-const reportMonthFormatter = new Intl.DateTimeFormat("en-GB", {
-  timeZone: "UTC",
-  year: "numeric",
-  month: "long",
-});
-
-function shiftMonth(value: string, offset: number) {
-  const [year, month] = value.split("-").map(Number);
-  const date = new Date(0);
-  date.setUTCFullYear(year, month - 1 + offset, 1);
-  return date.toISOString().slice(0, 7);
-}
 
 const offlineStatusText = {
   preparing: "Preparing offline access",
@@ -80,17 +57,17 @@ function FinanceWorkspace({ database, online, syncStatus, syncNow, signOut }: {
   syncNow: () => void;
   signOut: () => boolean;
 }) {
-  const [month, setMonth] = useState("");
+  const [reportingDate, setReportingDate] = useState(() => businessDate());
+  const [periodMode, setPeriodMode] = useState<PeriodMode>("month");
   const [panel, setPanel] = useState<AppPanel | null>(null);
   const [entryDate, setEntryDate] = useState<string>();
-  const [recent, setRecent] = useState<{ month: string; dates: string[]; failed?: boolean }>();
+  const [reportSnapshot, setReportSnapshot] = useState<{ key: string; report?: FinanceReport; failed?: boolean }>();
   const [saved, setSaved] = useState<{ departments: Department[]; pendingCount: number; sync: SyncMetadata }>();
   const [readFailed, setReadFailed] = useState(false);
   const [signOutFailed, setSignOutFailed] = useState(false);
 
-  useEffect(() => {
-    setMonth(businessDate().slice(0, 7));
-  }, []);
+  const { from, through } = periodForDate(reportingDate, periodMode);
+  const reportKey = from + "/" + through;
 
   useEffect(() => {
     const subscription = liveQuery(() => database.transaction(
@@ -108,20 +85,19 @@ function FinanceWorkspace({ database, online, syncStatus, syncNow, signOut }: {
   }, [database]);
 
   useEffect(() => {
-    if (!month) return;
-    const subscription = liveQuery(() => database.recentEntryDates(month)).subscribe({
-      next: (dates) => setRecent({ month, dates }),
-      error: () => setRecent({ month, dates: [], failed: true }),
+    const subscription = liveQuery(() => loadFinanceReport(database, { from, through })).subscribe({
+      next: (report) => setReportSnapshot({ key: reportKey, report }),
+      error: () => setReportSnapshot({ key: reportKey, failed: true }),
     });
     return () => subscription.unsubscribe();
-  }, [database, month]);
+  }, [database, from, through, reportKey]);
 
   function openEntry(date?: string) {
     setEntryDate(date);
     setPanel("entry");
   }
 
-  const recentForMonth = recent?.month === month ? recent : undefined;
+  const currentReport = reportSnapshot?.key === reportKey ? reportSnapshot : undefined;
   const pending = saved?.pendingCount ?? 0;
   return (
     <>
@@ -138,78 +114,8 @@ function FinanceWorkspace({ database, online, syncStatus, syncNow, signOut }: {
             <button className="action" type="button" onClick={() => setPanel("sync")}>View sync status</button>
           </div>
         )}
-        <section className="reporting-period" aria-label="Reporting period">
-          <button
-            className="icon-button month-arrow"
-            type="button"
-            aria-label="Previous month"
-            disabled={!month || month === "0001-01"}
-            onClick={() => setMonth(shiftMonth(month, -1))}
-          >
-            <ChevronLeft size={22} aria-hidden="true" />
-          </button>
-          <div className="month-field">
-            <CalendarDays size={18} aria-hidden="true" />
-            <span aria-hidden="true">
-              {month ? reportMonthFormatter.format(new Date(month + "-01T00:00:00Z")) : "Reporting month"}
-            </span>
-            <ChevronDown size={15} aria-hidden="true" />
-            <input
-              aria-label="Reporting month"
-              type="month"
-              min="0001-01"
-              max="9999-12"
-              value={month}
-              onChange={(event) => {
-                if (event.currentTarget.value && event.currentTarget.validity.valid) {
-                  setMonth(event.currentTarget.value);
-                }
-              }}
-            />
-          </div>
-          <button
-            className="icon-button month-arrow"
-            type="button"
-            aria-label="Next month"
-            disabled={!month || month === "9999-12"}
-            onClick={() => setMonth(shiftMonth(month, 1))}
-          >
-            <ChevronRight size={22} aria-hidden="true" />
-          </button>
-        </section>
-
-        <section aria-label="Financial summary">
-          <div className="summary">
-            <div className="summary-card sales-card">
-              <div className="summary-icon sales-icon">
-                <ChartNoAxesColumnIncreasing size={25} aria-hidden="true" />
-              </div>
-              <div>
-                <p className="summary-label">Total Sales</p>
-                <p className="summary-value">—</p>
-              </div>
-              <small className="currency">ZMW</small>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon expense-icon">
-                <ReceiptText size={19} aria-hidden="true" />
-              </div>
-              <div>
-                <p className="summary-label">Total Expenses</p>
-                <p className="summary-value expense-value">—</p>
-              </div>
-            </div>
-            <div className="summary-card">
-              <div className="summary-icon balance-icon">
-                <Wallet size={19} aria-hidden="true" />
-              </div>
-              <div>
-                <p className="summary-label">Overall Balance</p>
-                <p className="summary-value">—</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <PeriodSelector date={reportingDate} mode={periodMode} onDate={setReportingDate} onMode={setPeriodMode} />
+        <FinancialSummary report={currentReport?.report} />
 
         <section className="actions" aria-label="Finance actions">
           <button
@@ -241,32 +147,8 @@ function FinanceWorkspace({ database, online, syncStatus, syncNow, signOut }: {
           </button>
         </section>
 
-        <section className="recent-records" aria-labelledby="recent-title">
-          <h2 id="recent-title">Recent daily records</h2>
-          {recentForMonth?.dates.length ? (
-            <ul className="recent-list">
-              {recentForMonth.dates.map((date) => (
-                <li key={date}>
-                  <button className="recent-record" type="button" aria-haspopup="dialog"
-                    aria-label={`View or edit ${formatEntryDate(date)}`} onClick={() => openEntry(date)}>
-                    <CalendarDays size={18} aria-hidden="true" />
-                    <time dateTime={date}>{formatEntryDate(date)}</time>
-                    <span>View / Edit</span>
-                    <ChevronRight size={17} aria-hidden="true" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="empty-records">
-              <span className="record-icon">
-                <ClipboardList size={19} aria-hidden="true" />
-              </span>
-              <p>{recentForMonth?.failed ? "Couldn't load recent records." :
-                recentForMonth ? "No confirmed records for this month." : "Loading recent records…"}</p>
-            </div>
-          )}
-        </section>
+        <RecentDailyRecords report={currentReport?.report} mode={periodMode}
+          failed={currentReport?.failed ?? false} onOpen={openEntry} />
       </div>
 
       <AppDialog panel={panel} setPanel={(next) => {
@@ -278,11 +160,14 @@ function FinanceWorkspace({ database, online, syncStatus, syncNow, signOut }: {
             database={database}
             initialDate={entryDate}
             onSaved={(date) => {
-              setMonth(date.slice(0, 7));
+              setReportingDate(date);
               syncNow();
             }}
             onClose={() => setPanel(null)}
           />
+        )}
+        {panel === "reports" && (
+          <ReportsPanel database={database} departments={saved?.departments ?? []} date={reportingDate} mode={periodMode} />
         )}
         {panel === "departments" && (
           <DepartmentPanel database={database} departments={saved?.departments} readFailed={readFailed} onSaved={syncNow} />

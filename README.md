@@ -101,3 +101,12 @@ Open the installed app while online at the existing test address and tap **Updat
 For a phone replacement, sign in with the same Owner and let the cloud check finish before making new entries. The emergency backup also recovers work that had not reached Supabase. Restore it on a device with no unfinished drafts or pending changes of its own.
 
 If sync pauses on a conflict, use **More → Sync Now** to find the conflicting record ID and **Open Backups** to export the phone's data. Keep the file and compare the phone values with the Supabase record before deciding how to reconcile them. Pending changes stay on the phone during this review.
+
+## Check Feature 05 on Android
+
+Open the installed app online and tap **Update app** in the footer if it appears. [Open Levelgrid Finance](https://levelgrid-finance.vercel.app/)
+
+1. Select a **Month** or **Day** with known entries. Check **Total Sales**, **Total Expenses** and **Overall Balance**. Under **Department totals**, verify departmental expenses, Finance Expenses and each department's balance.
+2. Select a day with confirmed zeros and a day with no entries. Confirm the zero day shows K 0.00 and opens in **Recent daily records**. Select **View / Edit** to review or correct a recorded day.
+3. Turn off Wi-Fi and mobile data. Open **PDF Reports** and download the daily, monthly, department and custom date-range reports. Include an inactive department with history when testing the department report.
+4. Open the downloaded PDFs and compare their totals with the selected records. Check notices for missing or incomplete dates and for report changes awaiting sync.

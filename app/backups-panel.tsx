@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { BackupError, createBackup, readBackup, restoreBackup, restoreCorrectionDraft, type FinanceBackup } from "./finance/backup";
 import { businessDate, formatEntryDate } from "./finance/daily-entry";
 import { DailyEntryError, type FinanceDatabase, type RecoveryCopy } from "./finance/database";
+import { downloadFile } from "./finance/download";
 
 const correctionDate = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Lusaka",
@@ -48,14 +49,7 @@ export function BackupsPanel({ database, onRestore, onOpenEntry }: {
     void perform(async () => {
       const data = await createBackup(database);
       const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `levelgrid-finance-backup-${businessDate()}.json`;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      downloadFile(blob, `levelgrid-finance-backup-${businessDate()}.json`);
       setMessage({ text: "Backup download started." });
     }, "Couldn't prepare the backup. Try again.");
   }

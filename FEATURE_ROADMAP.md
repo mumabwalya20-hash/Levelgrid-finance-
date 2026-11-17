@@ -97,6 +97,10 @@ Use confirmed local records for date filters, balances and recent records with e
 
 Reconcile the on-screen and PDF figures with a known dataset including shared expenses, deactivated departments, confirmed zeros, missing records and pending sync. Verify that every report can be generated while offline and shows the applicable missing-data or unsynchronized-data notice.
 
+### Reporting periods
+
+The dashboard has month and day filters. Business reports check calendar dates through the current Lusaka date and mark days with incomplete entries separately from days with no confirmed entries. Department reports check missing dates within the department's operating dates and keep confirmed historical entries.
+
 ## Feature 06 — Testing and Release
 
 Run the full workflow on the intended Android phone and a fresh installation. Cover offline startup and entry, resume after interrupted work, editing, upload retries and conflicts, recovery, access controls and offline PDFs. Observe Supabase requests and CPU during idle periods, typical daily entry, reconnect with a pending queue and a fresh-device restore. Verify that ordinary on-device navigation and reports use local data and that ordinary sync avoids repeated transfers of unchanged records.
