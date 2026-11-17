@@ -10,7 +10,7 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 const titles = {
   entry: "Enter Daily Sales",
@@ -34,14 +34,6 @@ const moreActions = [
   { panel: "signOut", icon: LogOut },
 ] as const satisfies ReadonlyArray<{ panel: AppPanel; icon: typeof Download }>;
 
-const departments = [
-  "Chibombo Distributors",
-  "Chibombo Stationery",
-  "Chiyuni Stationery",
-  "Factory",
-  "Laundry",
-];
-
 const reports = [
   "Daily business report",
   "Monthly combined financial summary",
@@ -52,18 +44,16 @@ const reports = [
 const panelNotes = {
   entry: "Daily sales and expense entry is part of Feature 03.",
   reports: "PDF generation is part of Feature 05.",
-  departments: "Adding and deactivating departments is part of Feature 02.",
   install: "Open this page in Chrome on Android. In the browser menu, choose Install app or Add to Home screen.",
   sync: "Cloud synchronization is part of Feature 04.",
   backups: "Creating and restoring backups is part of Feature 04.",
-  signOut: "Account sign-in and sign-out are part of Feature 02.",
 };
 
 function PanelContent({
   panel,
   setPanel,
 }: {
-  panel: AppPanel;
+  panel: Exclude<AppPanel, "departments" | "signOut">;
   setPanel: (panel: AppPanel) => void;
 }) {
   if (panel === "more") {
@@ -90,12 +80,11 @@ function PanelContent({
     );
   }
 
-  const items = panel === "departments" ? departments : panel === "reports" ? reports : null;
   return (
     <>
-      {items && (
+      {panel === "reports" && (
         <ul className="panel-list">
-          {items.map((item) => <li key={item}>{item}</li>)}
+          {reports.map((item) => <li key={item}>{item}</li>)}
         </ul>
       )}
       <p className="panel-note">{panelNotes[panel]}</p>
@@ -106,9 +95,11 @@ function PanelContent({
 export function AppDialog({
   panel,
   setPanel,
+  children,
 }: {
   panel: AppPanel | null;
   setPanel: (panel: AppPanel | null) => void;
+  children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -155,7 +146,9 @@ export function AppDialog({
               <X size={21} aria-hidden="true" />
             </button>
           </header>
-          <PanelContent panel={panel} setPanel={setPanel} />
+          {panel === "departments" || panel === "signOut"
+            ? children
+            : <PanelContent panel={panel} setPanel={setPanel} />}
         </div>
       )}
     </dialog>

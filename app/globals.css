@@ -468,6 +468,116 @@ p {
   line-height: 1.6;
 }
 
+.auth-status,
+.form-help {
+  color: var(--muted);
+  font-size: 0.87rem;
+  line-height: 1.5;
+}
+
+.auth-card {
+  display: grid;
+  gap: 20px;
+  padding: 21px 18px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+}
+
+.auth-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-card h2 {
+  font-size: 1.12rem;
+  font-weight: 740;
+}
+
+.finance-form,
+.form-field,
+.sign-out-panel,
+.department-panel,
+.panel-confirmation {
+  display: grid;
+  gap: 12px;
+}
+
+.form-field {
+  gap: 6px;
+  color: var(--blue-deep);
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.form-field input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #a9bee6;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--blue-deep);
+  font-size: 1rem;
+  font-weight: 450;
+}
+
+.device-trust {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.device-trust input {
+  flex-shrink: 0;
+  width: 19px;
+  height: 19px;
+  margin: 0;
+  accent-color: var(--blue);
+}
+
+.form-feedback {
+  color: var(--blue-deep);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.pending-notice,
+.panel-confirmation {
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: var(--orange-soft);
+  color: var(--blue-deep);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.department-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+
+.department-row .action {
+  min-height: 44px;
+}
+
+.department-panel h3 {
+  margin: 0;
+  font-size: 0.89rem;
+}
+
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 @media (max-width: 345px) {
   .app-shell {
     padding-inline: 13px;

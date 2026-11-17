@@ -14,8 +14,13 @@ import {
   ReceiptText,
   Wallet,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { liveQuery } from "dexie";
+import { useEffect, useRef, useState } from "react";
 import { AppDialog, type AppPanel } from "./app-dialog";
+import { DepartmentPanel } from "./department-panel";
+import type { Department, FinanceDatabase } from "./finance/database";
+import { OwnerSession, type OwnerAccess } from "./finance/owner-session";
+import { OwnerSignIn } from "./owner-sign-in";
 import { useAppStatus } from "./use-app-status";
 
 const businessMonthFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -51,37 +56,65 @@ const offlineStatusText = {
   development: "Offline access requires a production build",
 };
 
-export default function FinancePage() {
-  const [month, setMonth] = useState("");
-  const [panel, setPanel] = useState<AppPanel | null>(null);
-  const { isOnline, offlineStatus } = useAppStatus();
-
-  useEffect(() => {
-    setMonth(currentBusinessMonth());
-  }, []);
-
+function AppHeader({ onMore }: { onMore?: () => void }) {
   return (
-    <main className="app-shell">
-      <header className="app-header">
-        <div className="brand">
-          <img src="/brand/levelgrid-mark.png" width={50} height={50} alt="" />
-          <div>
-            <p className="brand-name">Levelgrid Enterprises</p>
-            <h1>Financial Records</h1>
-          </div>
+    <header className="app-header">
+      <div className="brand">
+        <img src="/brand/levelgrid-mark.png" width={50} height={50} alt="" />
+        <div>
+          <p className="brand-name">Levelgrid Enterprises</p>
+          <h1>Financial Records</h1>
         </div>
+      </div>
+      {onMore && (
         <button
           className="icon-button more-button"
           type="button"
           aria-label="More options"
           aria-haspopup="dialog"
-          onClick={() => setPanel("more")}
+          onClick={onMore}
         >
           <Ellipsis size={23} aria-hidden="true" />
         </button>
-      </header>
+      )}
+    </header>
+  );
+}
 
+function FinanceWorkspace({ database, signOut }: { database: FinanceDatabase; signOut: () => boolean }) {
+  const [month, setMonth] = useState("");
+  const [panel, setPanel] = useState<AppPanel | null>(null);
+  const [saved, setSaved] = useState<{ departments: Department[]; pendingCount: number }>();
+  const [readFailed, setReadFailed] = useState(false);
+  const [signOutFailed, setSignOutFailed] = useState(false);
+
+  useEffect(() => {
+    setMonth(currentBusinessMonth());
+  }, []);
+
+  useEffect(() => {
+    const subscription = liveQuery(() => database.transaction(
+      "r",
+      database.departments,
+      database.pendingOperations,
+      async () => ({
+        departments: await database.departments.orderBy("position").toArray(),
+        pendingCount: await database.pendingOperations.count(),
+      }),
+    )).subscribe({ next: setSaved, error: () => setReadFailed(true) });
+    return () => subscription.unsubscribe();
+  }, [database]);
+
+  const pending = saved?.pendingCount ?? 0;
+  return (
+    <>
+      <AppHeader onMore={() => setPanel("more")} />
       <div className="app-content">
+        {pending > 0 && (
+          <p className="pending-notice" role="status">
+            {pending} {pending === 1 ? "change is" : "changes are"} saved only on this phone.
+          </p>
+        )}
         <section className="reporting-period" aria-label="Reporting period">
           <button
             className="icon-button month-arrow"
@@ -196,18 +229,78 @@ export default function FinancePage() {
         </section>
       </div>
 
+      <AppDialog panel={panel} setPanel={setPanel}>
+        {panel === "departments" && (
+          <DepartmentPanel database={database} departments={saved?.departments} readFailed={readFailed} />
+        )}
+        {panel === "signOut" && (
+          <div className="sign-out-panel">
+            <p className="panel-note">
+              Your records and pending changes stay on this phone. Sign in online with the same account to open them again.
+            </p>
+            {signOutFailed && <p className="form-feedback" role="alert">Couldn't remove offline access. Try signing out again.</p>}
+            <button className="action action-primary" type="button" onClick={() => {
+              if (!signOut()) setSignOutFailed(true);
+            }}>
+              Sign out
+            </button>
+          </div>
+        )}
+      </AppDialog>
+    </>
+  );
+}
+
+export default function FinancePage() {
+  const [access, setAccess] = useState<OwnerAccess>({ screen: "checking" });
+  const session = useRef<OwnerSession | null>(null);
+  const { isOnline, offlineStatus } = useAppStatus();
+
+  useEffect(() => {
+    const owner = new OwnerSession(setAccess);
+    session.current = owner;
+    owner.start();
+    return () => {
+      owner.dispose();
+      session.current = null;
+    };
+  }, []);
+
+  const connected = access.screen === "finance" && access.offline ? false : isOnline;
+  const appStatus = offlineStatus === "ready" && !(access.screen === "finance" && access.trusted)
+    ? "App shell cached"
+    : offlineStatusText[offlineStatus];
+
+  return (
+    <main className="app-shell">
+      {access.screen === "finance" ? (
+        <FinanceWorkspace
+          key={access.database.name}
+          database={access.database}
+          signOut={() => session.current?.signOut() ?? false}
+        />
+      ) : (
+        <>
+          <AppHeader />
+          <OwnerSignIn
+            access={access}
+            isOnline={isOnline}
+            signIn={async (email, password, trustDevice) => {
+              await session.current?.signIn(email, password, trustDevice);
+            }}
+          />
+        </>
+      )}
       <footer className="app-footer" role="status">
         <span className="connection">
           <span
-            className={isOnline === true ? "status-dot status-dot-online" : "status-dot"}
+            className={connected === true ? "status-dot status-dot-online" : "status-dot"}
             aria-hidden="true"
           />
-          {isOnline === null ? "Checking connection" : isOnline ? "Online" : "Offline"}
+          {connected === null ? "Checking connection" : connected ? "Online" : "Offline"}
         </span>
-        <span>{offlineStatusText[offlineStatus]}</span>
+        <span>{appStatus}</span>
       </footer>
-
-      <AppDialog panel={panel} setPanel={setPanel} />
     </main>
   );
 }
