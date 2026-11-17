@@ -6,8 +6,8 @@
 | --- | --- |
 | Revised master blueprint | Approved by the Owner on 16 November 2026 |
 | Feature roadmap | Approved |
-| Application implementation | Features 01 and 02 merged. Feature 03 implemented on its review branch |
-| Application tests | Feature 03 static build and offline browser checks passed. Owner Android check pending |
+| Application implementation | Features 01–03 implemented. Feature 04 is next |
+| Application tests | Feature 03 static build, offline browser checks and Owner Android testing passed |
 
 ## Feature tracker
 
@@ -15,7 +15,7 @@
 | --- | --- | --- | --- |
 | 01 — Foundation and One-Page PWA | Implemented | Static build, types, installability, panel navigation and offline reopen verified in Chromium | Owner Android check passed on 17 November 2026 |
 | 02 — Authentication and Offline Database | Implemented | Static build, Chromium with simulated Supabase Auth and PostgreSQL-compatible schema tests passed | Owner reported Feature 02 passed on 17 November 2026 |
-| 03 — Guided Daily Entry | Implemented | TypeScript, static build, phone-size Chromium and IndexedDB checks passed | Owner Android check pending |
+| 03 — Guided Daily Entry | Implemented | TypeScript, static build, phone-size Chromium and IndexedDB checks passed | Owner confirmed the Android test passed on 17 November 2026 |
 | 04 — Reliable Sync and Recovery | Pending | Pending | Pending |
 | 05 — Dashboard and PDF Reports | Pending | Pending | Pending |
 | 06 — Testing and Release | Pending | Pending | Pending |
@@ -28,6 +28,7 @@
 - **17 November 2026** — Merged the Android-tested Feature 01 branch. Started Feature 02 with Owner sign-in, device trust, Dexie storage, department management and an account-scoped cloud schema.
 - **17 November 2026** — Merged Feature 02 into `main`. [Pull request #3](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/3)
 - **17 November 2026** — Implemented the guided daily form, per-date drafts, review, and offline confirmation and corrections. Department selection follows the business date and preserves departments already included in a draft or confirmed entry.
+- **17 November 2026** — The Owner approved Feature 03 and requested one address for phone testing. The `testing` branch is used for every Vercel Preview at that address. [Owner test address](https://levelgrid-finance.vercel.app/)
 
 ## Feature 01 verification
 
@@ -54,4 +55,4 @@
 
 ## Next action
 
-Run the [Feature 03 Android checks](README.md#check-feature-03-on-android) on the Vercel preview for Owner acceptance.
+Implement Feature 04 and deploy it from `testing` for Owner acceptance.

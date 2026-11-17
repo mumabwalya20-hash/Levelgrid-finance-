@@ -6,6 +6,7 @@
 - The Owner approved the revised master blueprint on 16 November 2026. Start with Feature 01 and follow the feature sequence.
 - Test each feature against its acceptance checks and record results and Owner acceptance in `PROGRESS.md` when they occur.
 - Record changes to business behavior in the blueprint and progress notes when the Owner decides them. Keep feature design decisions consistent with the blueprint.
+- Use `testing` for all Vercel Preview deployments. After the build is ready, point the existing Owner phone address at that deployment and verify the branch and commit. [Owner test address](https://levelgrid-finance.vercel.app/)
 
 ## Implementation rules
 
