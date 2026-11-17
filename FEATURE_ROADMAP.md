@@ -41,9 +41,11 @@ Set up Supabase Auth for the private account, account-scoped PostgreSQL tables a
 
 The Owner can sign in, close and reopen the PWA offline after establishing device trust, and manage departments from the main page. A deactivated department's historical records remain readable. Check unauthorized data access using synthetic records and verify the first-use and reconnection behavior.
 
-### Design details to settle
+### Trusted-device behavior
 
-Define how trusted offline access ends on sign-out or remote revocation, and how sign-out protects pending local work.
+An online Owner sign-in can establish device trust. The trusted app can reopen its account-specific database offline. On app open, foregrounding and reconnect, it checks the session and Owner access with Supabase when reachable.
+
+Sign-out removes device trust and keeps records, drafts and pending operations on the device. A session or Owner access revoked in Supabase locks the app once verified online. Signing in online with the same account makes its local data available again.
 
 ## Feature 03 — Guided Daily Entry
 
