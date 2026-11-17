@@ -6,8 +6,9 @@
 | --- | --- |
 | Revised master blueprint | Approved by the Owner on 16 November 2026 |
 | Feature roadmap | Approved |
-| Application implementation | Features 01–05 implemented. Feature 06 is next |
-| Application tests | Feature 05 build, offline browser checks, PDF reconciliation and Owner Android testing passed |
+| Application implementation | Features 01–05 merged and verified for release |
+| Application tests | Feature 06 browser, database and deployment checks passed |
+| Production release | Released on 17 November 2026. [Levelgrid Finance](https://levelgrid-finance.vercel.app/) |
 
 ## Feature tracker
 
@@ -18,7 +19,7 @@
 | 03 — Guided Daily Entry | Implemented | TypeScript, static build, phone-size Chromium and IndexedDB checks passed | Owner confirmed the Android test passed on 17 November 2026 |
 | 04 — Reliable Sync and Recovery | Implemented | PostgreSQL-compatible migration and browser checks passed | Owner confirmed Feature 04 passed on 17 November 2026 |
 | 05 — Dashboard and PDF Reports | Implemented | Offline dashboard, four PDF formats and pagination checked with synthetic records | Owner confirmed the Android test passed on 17 November 2026 |
-| 06 — Testing and Release | Pending | Pending | Pending |
+| 06 — Testing and Release | Released from `main` | Final browser, PostgreSQL-compatible, performance and Vercel smoke checks passed | Owner confirmed checks and approved release on 17 November 2026 |
 
 ## Decision log
 
@@ -34,6 +35,7 @@
 - **17 November 2026** — The Owner accepted Feature 04 and authorized Feature 05. [Pull request #5](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/5)
 - **17 November 2026** — Implemented month and day dashboard filters, departmental totals, recent record balances and four offline PDF report types.
 - **17 November 2026** — The Owner accepted Feature 05 after Android testing. [Pull request #6](https://github.com/mumabwalya20-hash/Levelgrid-finance-/pull/6)
+- **17 November 2026** — The Owner confirmed the final checks and approved the production release. [Released app](https://levelgrid-finance.vercel.app/)
 
 ## Feature 01 verification
 
@@ -72,6 +74,21 @@
 - Matched dashboard and PDF amounts to synthetic entries with Finance Expenses, inactive department history, pending work, missing and incomplete dates, confirmed zeros and a live correction. Totals remained exact for negative values and combined figures above JavaScript's safe integer range.
 - Checked 320 and 390 pixel dashboard layouts, the rendered A4 PDFs, repeated table headings and multi-page numbering. Feature 04 sync, backup, recovery and update checks continued to pass.
 
-## Next action
+## Feature 06 verification
 
-Run the Feature 06 end-to-end release checks and record the Owner's release decision.
+- Verified the accepted application code in `main` commit `38bddf2d5017fabbade1c34db7380134a12dacd8`. TypeScript and the static export passed. The offline shell cached 27 files.
+- Final browser tests passed for trusted offline startup, draft recovery, explicit zero entry, atomic saves, editing, interrupted upload retries, conflict preservation, backup restore and cloud restore in a fresh browser. Offline PDF downloads and exact amounts passed for all four report types.
+- The PostgreSQL-compatible fixture passed the migration, Owner-only access, revoked session, duplicate replay, revision conflict and bounded download checks. A sync with no new changes returned an empty page.
+- Verified the installed app address serves Vercel Production from `main`. The app shell, manifest, service worker and cached report assets loaded successfully. The production build uses the same Finance Supabase connection settings as the accepted preview.
+
+### Request counts with synthetic records
+
+| Activity | Auth requests | Department reads | Upload batches | Download pages | Fixture RPC process CPU (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Eight seconds idle | 0 | 0 | 0 | 0 | 0 |
+| Date navigation and opening reports | 0 | 0 | 0 | 0 | 0 |
+| Normal online day save | 0 | 0 | 1 | 1 | 5.5 |
+| Reconnect with a pending change | 1 | 1 | 1 | 1 | 4.0 |
+| Fresh sign-in and cloud restore | 1 | 1 | 0 | 1 | 2.7 |
+
+CPU timings describe the local PostgreSQL-compatible fixture. Measurement in the live Supabase project's metrics remains outstanding.

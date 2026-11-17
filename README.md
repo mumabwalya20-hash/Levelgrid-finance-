@@ -1,6 +1,6 @@
 # Levelgrid Enterprises Financial Records
 
-Levelgrid Finance is a planned private Android PWA for recording daily sales and expenses in ZMW, viewing balances and generating PDF reports.
+Levelgrid Finance is a private Android PWA for recording daily sales and expenses in ZMW, viewing balances and generating PDF reports.
 
 The [progress tracker](PROGRESS.md) records implementation, verification and acceptance.
 
@@ -25,11 +25,11 @@ Deploy the `out/` directory on static HTTPS hosting. For a Vercel preview, set t
 
 To serve the production build on the build computer, run `python3 -m http.server 4173 --bind 127.0.0.1 --directory out` and open [localhost port 4173](http://127.0.0.1:4173/).
 
-## Vercel phone testing
+## Vercel deployments
 
-Deploy the `testing` branch to the Levelgrid Finance project as a Vercel Preview. When the deployment is ready, assign the existing test address to it and verify the address serves the intended `testing` commit. [Open Levelgrid Finance](https://levelgrid-finance.vercel.app/)
+Use `testing` for Preview builds and `main` for Owner-approved Production releases. Configure Production to use the Finance Supabase project already used by the installed app. Verify the production commit at the fixed address after deployment. [Open Levelgrid Finance](https://levelgrid-finance.vercel.app/)
 
-Install the PWA from that address once. If an older installation shows feature placeholders, refresh the test address in Chrome while online, then reopen the installed app.
+Install the PWA from that address once. If an older installation shows feature placeholders, refresh the app address in Chrome while online, then reopen the installed app.
 
 For future releases, finish any open entry and tap **Update app** in the footer when it appears. The app reloads once the new offline shell is ready. Keep the phone's site data so the same installation keeps drafts and pending changes.
 
